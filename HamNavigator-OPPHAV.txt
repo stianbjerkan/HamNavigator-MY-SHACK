@@ -1,0 +1,7 @@
+HamNavigator-utgaven: programmert og designet av LB7YK (Stian Bjerkan).
+Modifisert utgave av MSHV 2.76.6, 7. september 2026.
+Original: Copyright 2015-2025 Hrisimir Hristov, LZ2HV.
+Kontakt: lz2hv@abv.bg. Originalprosjekt: https://lz2hv.org/mshv
+GNU GPL versjon 3. Se licenses/MSHV-COPYING.txt og licenses/MSHV-license.txt.
+Full modifisert kildekode følger i HamNavigator-kildekode.zip.
+Dette er en uavhengig utgave, ikke en offisiell MSHV-utgivelse.
