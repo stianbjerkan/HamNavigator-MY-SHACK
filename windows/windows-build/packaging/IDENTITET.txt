@@ -1,0 +1,23 @@
+HamNavigator 1.9.1 – Windows-navn og ikoner
+
+Kjør app_identity.py på den ferdige pakkemappen etter at programfilene er kopiert,
+og før Inno Setup bygger installasjonsfilen:
+
+  python app_identity.py <pakkemappe> --version 1.9.1
+
+Pakkemappen inneholder Radioassistent.exe, release/HamNavigator/HamNavigator.exe
+og release/HamNavigator-Map/HamNavigatorMap.exe. hamnavigator.ico skal ligge
+ved siden av app_identity.py. Python 3.11 eller nyere og Windows kreves.
+
+Skriptet henter electron/rcedit 2.0.0 fra offisiell GitHub-utgivelse ved behov,
+kontrollerer den fastsatte SHA-256-sjekksummen og oppdaterer VERSIONINFO og ikon.
+Kilde: https://github.com/electron/rcedit/releases/tag/v2.0.0
+
+Alle språk i Windows-versjonsressursen kontrolleres. Kodens og dataenes PE-
+seksjoner må ha samme SHA-256 før og etter. Byggingen stopper ved avvik.
+Signerte programfiler avvises; eventuell signering skal skje etter dette trinnet.
+Opphavsopplysninger, lisenser og kildekode beholdes i de medfølgende filene.
+Brannmurregler, brukerprofiler, kontakter og radiokonfigurasjon endres ikke.
+
+Map-kildens package.json og oppstartstekster får HamNavigator-navnet.
+Protokollidentifikatorer og eksisterende profilnøkler beholdes for kompatibilitet.

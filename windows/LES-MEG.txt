@@ -1,0 +1,19 @@
+HamNavigator MY SHACK 1.9.15
+18. september 2026
+
+Eksporter ADIF foreslår nå hamnavigator.adi. POTA- og SOTA-utvalg beholder
+pota.adi og sota.adi. Eksporten er en kopi; den aktive fellesloggen som Map
+skal følge finnes fortsatt under App Log(s). Oppsett og kontakter beholdes.
+
+Oppdater via Oppdater > Oppdater nå i HamNavigator. Nedlastingen kontrolleres
+med SHA-256. Installasjonsprogrammet lagrer og lukker MY SHACK, Digital og Map
+før filene byttes. Stopp radiokjøringen først og fullfør installasjonsvinduet.
+Programmet starter uten automatisk gjenopptatt sending.
+
+Språk / Language velger norsk, engelsk eller svensk. Bruksanvisningene følger
+alle tre språk i MY SHACK, Digital og Map. Språkvalget er lokalt for PC-en.
+Bruk samme HamNavigator-konto på enhetene for Cloud-synkronisering.
+Lydkort, USB og CAT/PTT må kontrolleres lokalt på hver enhet.
+
+HamNavigator-utgaven: LB7YK (Stian Bjerkan). Komponentenes lisenser og
+tilhørende kildekode følger den offentlige klientutgaven.

@@ -1,0 +1,17 @@
+HamNavigator MY SHACK 1.9.15
+
+Välj Språk / Language i MY SHACK för norska, engelska eller svenska.
+MY SHACK byter språk direkt. Starta om HamNavigator för att Windows-paneler,
+Digital och Map ska använda det nya språket. Stoppa sändningen före omstart.
+Valet sparas på datorn. Kontakter, lösenord och radioinställningar behålls.
+Radiomeddelanden och kontaktdata översätts inte.
+
+Bruksanvisningarna för MY SHACK, Digital och Map finns på alla tre språken
+i programmen, med sökning offline där det stöds.
+
+Logga in med ditt HamNavigator-konto. Använd samma konto på datorer och
+mobil för synkronisering via Cloud. Ställ in ljud, USB och CAT/PTT på varje
+enhet. Uppdatering återupptar inte radiosändningen.
+
+HamNavigator-utgåvan: LB7YK (Stian Bjerkan). Komponentlicenser och motsvarande
+källkod följer med den offentliga klientutgåvan. Serverfiler är privata.

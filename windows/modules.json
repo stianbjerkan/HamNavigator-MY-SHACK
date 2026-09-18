@@ -1,0 +1,72 @@
+[
+  {
+    "id": "utc",
+    "title": "UTC-klokke",
+    "description": "Klokke på oversikten og liten widget",
+    "page": null,
+    "targets": ".clock-card, #widget-button"
+  },
+  {
+    "id": "hf",
+    "title": "HF & DX",
+    "description": "Soldata, båndtips og DX-spots",
+    "page": "hf",
+    "targets": ""
+  },
+  {
+    "id": "vhf",
+    "title": "VHF / UHF",
+    "description": "Repeaterfavoritter og kart",
+    "page": "vhf",
+    "targets": ""
+  },
+  {
+    "id": "ft8",
+    "title": "HamNavigator Digital",
+    "description": "Dekodinger, status og digital loggføring",
+    "page": "ft8",
+    "targets": "#stat-ft8-card"
+  },
+  {
+    "id": "gridtracker",
+    "title": "HamNavigator Map",
+    "description": "Valgfrie paneler og flere programmer i samme vindu",
+    "page": "gridtracker",
+    "targets": ""
+  },
+  {
+    "id": "listener",
+    "title": "Kallesignallytter",
+    "description": "Radiotale til forslag på skjermen",
+    "page": "listener",
+    "targets": ""
+  },
+  {
+    "id": "log",
+    "title": "Loggbok",
+    "description": "Kontakter, hurtiglogg og ADIF",
+    "page": "log",
+    "targets": ".quick-log, #stat-total-card, #stat-calls-card, #recent-card"
+  },
+  {
+    "id": "tools",
+    "title": "Verktøy",
+    "description": "Lokator, retning og antennelengder",
+    "page": "tools",
+    "targets": ""
+  },
+  {
+    "id": "help",
+    "title": "Radiohjelp",
+    "description": "Feilsøking og egne stasjonsnotater",
+    "page": "help",
+    "targets": ""
+  },
+  {
+    "id": "portable",
+    "title": "POTA / SOTA",
+    "description": "Aktivering, jegerlogg og ADIF med referanser",
+    "page": "portable",
+    "targets": ""
+  }
+]

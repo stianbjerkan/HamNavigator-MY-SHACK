@@ -34,6 +34,11 @@ Bruk **Issues** på denne siden for feil og forslag. Oppgi programversjon, Windo
 
 ## Utvikling og kildekode
 
+Aktuell Windows-klient ligger i [`windows/`](windows/). Versjon 1.9.15 retter
+standardnavnet for ADIF-eksport til `hamnavigator.adi`. Kildekodearkivene under
+Releases inneholder også tilhørende Digital- og Map-kode og lisenser.
+De eldre C#/XAML-filene i roten er WPF-prototypen, ikke MY SHACK-installasjonen.
+
 HamNavigator-utgaven er programmert og designet av **LB7YK – Stian Bjerkan**.
 
 Kildekodevedlegg finnes under Releases. Opphavsopplysninger og komponentlisenser følger programmet og ligger også i `HamNavigator-OPPHAV.txt` og `Map-OPPHAV.txt` her. Lisensene gjelder hver enkelt komponent; denne utgivelsen erstatter ikke disse vilkårene.

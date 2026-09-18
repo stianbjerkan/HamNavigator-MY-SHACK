@@ -1,0 +1,5 @@
+OpenLayers 10.1.0, BSD-2-Clause. Copyright OpenLayers contributors.
+https://github.com/openlayers/openlayers/tree/v10.1.0
+Background map: OpenStreetMap contributors, attribution shown on map.
+POTA and SOTA catalogue sources and retrieval time are stored in map-data/catalogue.json.
+Radioassistent renders its own map UI and reference layers.

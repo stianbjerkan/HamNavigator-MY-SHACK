@@ -1,0 +1,19 @@
+'use strict';
+(() => {
+  const english=document.documentElement.lang==='en';
+  const swedish=document.documentElement.lang==='sv';
+  pageNames.language='Språk / Language';
+  const nav=document.querySelector('.sidebar nav'),button=document.createElement('button');
+  button.dataset.page='language';button.textContent='◎ Språk / Language';nav.append(button);
+  button.onclick=()=>showPage('language');
+  const page=document.createElement('section');page.id='page-language';page.className='page';
+  page.innerHTML=swedish?`<div class="page-heading"><div><p class="eyebrow">DITT SPRÅK</p><h1>Språk</h1><p>Välj språk för HamNavigator på den här datorn.</p></div></div><article class="card"><form id="language-form"><label for="language-choice">Språk / Language</label><select id="language-choice" name="language"><option value="nb">Norsk (bokmål)</option><option value="en">English</option><option value="sv">Svenska</option></select><p>Språket sparas på den här datorn. MY SHACK ändras direkt. Starta om HamNavigator för att använda språket i Windows-panelerna, Digital och Map. Stoppa radiosändningen före omstart.</p><p>Menyer, underflikar, dialogrutor och bruksanvisningar följer ditt val. Kontakter, anropssignaler och lösenord behåller sitt innehåll. Windows-dialogrutor följer språket i Windows.</p><button class="primary">Spara språk</button><p id="language-result" role="status"></p></form></article>`:english?`<div class="page-heading"><div><p class="eyebrow">YOUR LANGUAGE</p><h1>Language</h1><p>Choose the language for HamNavigator on this PC.</p></div></div><article class="card"><form id="language-form"><label for="language-choice">Språk / Language</label><select id="language-choice" name="language"><option value="nb">Norsk (bokmål)</option><option value="en">English</option><option value="sv">Svenska</option></select><p>The language is saved on this PC. MY SHACK changes immediately. Restart HamNavigator to apply it to the Windows panels, Digital and Map. Stop radio transmission before restarting.</p><p>Menus, subpages, dialogs and user guides follow your choice. Your contacts, callsigns and passwords keep their original content. Windows dialogs follow the Windows language.</p><button class="primary">Save language</button><p id="language-result" role="status"></p></form></article>`:`<div class="page-heading"><div><p class="eyebrow">DITT SPRÅK</p><h1>Språk</h1><p>Velg språk for HamNavigator på denne PC-en.</p></div></div><article class="card"><form id="language-form"><label for="language-choice">Språk / Language</label><select id="language-choice" name="language"><option value="nb">Norsk (bokmål)</option><option value="en">English</option><option value="sv">Svenska</option></select><p>Språket lagres på denne PC-en. MY SHACK endres med én gang. Start HamNavigator på nytt for å ta det i bruk i Windows-panelene, Digital og Map. Stopp radiosending før omstart.</p><p>Menyer, underfaner, dialoger og bruksanvisninger følger valget. Kontakter, kallesignaler og passord beholder innholdet sitt. Windows-dialoger følger Windows-språket.</p><button class="primary">Lagre språk</button><p id="language-result" role="status"></p></form></article>`;
+  document.querySelector('main').insertBefore(page,document.querySelector('main>footer'));
+  page.querySelector('select').value=swedish?'sv':english?'en':'nb';
+  if(location.hash==='#language')showPage('language',false);
+  page.querySelector('form').onsubmit=async event=>{
+    event.preventDefault();const submit=page.querySelector('button');submit.disabled=true;
+    try{await api('language',{language:page.querySelector('select').value});location.hash='language';location.reload();}
+    catch(error){page.querySelector('#language-result').textContent=swedish?'Språket kunde inte sparas. Försök igen.':english?'The language could not be saved. Try again.':'Språket kunne ikke lagres. Prøv igjen.';submit.disabled=false;}
+  };
+})();
