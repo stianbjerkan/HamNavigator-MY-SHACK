@@ -3,3 +3,17 @@
 *.log
 __pycache__/
 .env
+
+# Visual Studio / .NET build output
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Local reference material and generated audit output
+.reference-mshv-src/
+.reference-mshv.zip
+single-file-test/
+translation-audit.txt
+README.local.md

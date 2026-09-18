@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>HamNavigator</AssemblyName>
+    <RootNamespace>RadioLog</RootNamespace>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+  <ItemGroup><Resource Include="Assets\HamNavigator.png" /></ItemGroup>
+  <ItemGroup><PackageReference Include="System.IO.Ports" Version="8.0.0" /></ItemGroup>
+</Project>

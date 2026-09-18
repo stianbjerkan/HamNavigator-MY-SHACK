@@ -1,0 +1,35 @@
+<Window x:Class="RadioLog.AdvancedFt8SettingsWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="HamNavigator • Avanserte FT8-innstillinger" Width="760" Height="620" WindowStartupLocation="CenterOwner" Background="#07111F" Foreground="White">
+ <Window.Resources>
+  <Style TargetType="TabControl">
+   <Setter Property="Background" Value="#07111F"/>
+   <Setter Property="Foreground" Value="#EAF8FF"/>
+   <Setter Property="BorderBrush" Value="#2389BB"/>
+   <Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="TabControl">
+      <Grid Background="#07111F">
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+       <TabPanel Grid.Row="0" IsItemsHost="True" Background="#07111F"/>
+       <Border Grid.Row="1" Background="#07111F" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+        <ContentPresenter Content="{TemplateBinding SelectedContent}" ContentTemplate="{TemplateBinding SelectedContentTemplate}" Margin="6"/>
+       </Border>
+      </Grid>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="ScrollViewer">
+   <Setter Property="Background" Value="#07111F"/>
+   <Setter Property="Foreground" Value="#EAF8FF"/>
+  </Style>
+ </Window.Resources>
+ <Grid Margin="14"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock x:Name="Heading" FontSize="22" FontWeight="Bold" Foreground="#62DFFF" Margin="6,4,6,14"/><TabControl x:Name="SettingsTabs" Grid.Row="1">
+  <TabItem Header="DEKODER"><ScrollViewer><StackPanel Margin="14"><TextBlock Text="FT8-DEKODER" Style="{StaticResource SectionTitle}"/><CheckBox Content="Auto Decode" IsChecked="True"/><CheckBox Content="Tretrinns dekoding"/><CheckBox Content="AP-dekoding" IsChecked="True"/><CheckBox Content="Gjennomsnittsdekoding"/><CheckBox Content="SD FT8 Decoder (beta)"/><TextBlock Text="Dekodedybde"/><Slider Minimum="1" Maximum="5" Value="3" TickFrequency="1" IsSnapToTickEnabled="True"/><TextBlock Text="Antall dekodertråder"/><ComboBox SelectedIndex="2"><ComboBoxItem>1</ComboBoxItem><ComboBoxItem>2</ComboBoxItem><ComboBoxItem>4</ComboBoxItem><ComboBoxItem>8</ComboBoxItem></ComboBox><CheckBox Content="Bruk filtre ved automatisk sekvens"/></StackPanel></ScrollViewer></TabItem>
+  <TabItem Header="WATERFALL"><StackPanel Margin="14"><TextBlock Text="WATERFALL OG MARKØRER" Style="{StaticResource SectionTitle}"/><TextBlock Text="Gain"/><Slider Minimum="0" Maximum="100" Value="55"/><TextBlock Text="Kontrast"/><Slider Minimum="0" Maximum="100" Value="60"/><TextBlock Text="Startfrekvens"/><TextBox Text="100"/><TextBlock Text="Båndbredde"/><TextBox Text="3200"/><CheckBox Content="Vis musemarkører" IsChecked="True"/><CheckBox Content="Vis RX-markører" IsChecked="True"/><CheckBox Content="Vis TX-markører" IsChecked="True"/><CheckBox Content="Vis/skjul waterfall" IsChecked="True"/></StackPanel></TabItem>
+  <TabItem Header="AUTO SEQ"><StackPanel Margin="14"><TextBlock Text="AUTOMATISK SEKVENS" Style="{StaticResource SectionTitle}"/><CheckBox Content="Automatisk neste QSO"/><CheckBox Content="Dobbeltklikk på kall slår AUTO på" IsChecked="True"/><CheckBox Content="Automatisk logging etter RR73/73"/><CheckBox Content="Spør før QSO logges"/><CheckBox Content="Multi Answering Auto Seq • Standard"/><CheckBox Content="Multi Answering Auto Seq • DXpedition"/><CheckBox Content="Super Hound"/><CheckBox Content="Super Fox"/><TextBlock Text="Maksimum samtidige TX-spor"/><Slider Minimum="1" Maximum="9" Value="1" TickFrequency="1" IsSnapToTickEnabled="True"/></StackPanel></TabItem>
+  <TabItem Header="MELDINGER"><StackPanel Margin="14"><TextBlock Text="MAKROER OG CQ-TYPER" Style="{StaticResource SectionTitle}"/><TextBlock Text="CQ-type"/><ComboBox SelectedIndex="0"><ComboBoxItem>CQ</ComboBoxItem><ComboBoxItem>CQ POTA</ComboBoxItem><ComboBoxItem>CQ SOTA</ComboBoxItem><ComboBoxItem>CQ BOTA</ComboBoxItem><ComboBoxItem>CQ DX</ComboBoxItem></ComboBox><TextBlock Text="Egen CQ-tekst"/><TextBox/><CheckBox Content="Tillat ikke-standard kallesignal"/><CheckBox Content="Automatisk rapport fra dekodet SNR" IsChecked="True"/><TextBlock Text="Fritekst"/><TextBox MaxLength="13"/></StackPanel></TabItem>
+  <TabItem Header="TID / TX"><StackPanel Margin="14"><TextBlock Text="TID OG SENDING" Style="{StaticResource SectionTitle}"/><TextBlock Text="Manuell DT-korrigering"/><Slider Minimum="-2" Maximum="2" Value="0" TickFrequency="0.1"/><CheckBox Content="Blink rødt når DT-korrigering er aktiv" IsChecked="True"/><TextBlock Text="Tune-periode"/><ComboBox SelectedIndex="0"><ComboBoxItem>20 sekunder</ComboBoxItem><ComboBoxItem>25 sekunder</ComboBoxItem><ComboBoxItem>29 sekunder</ComboBoxItem></ComboBox><CheckBox Content="TX første periode (00/30)"/><CheckBox Content="TX andre periode (15/45)"/><CheckBox Content="Hold TX-frekvens"/><CheckBox Content="Fake It / split CAT"/></StackPanel></TabItem>
+  <TabItem Header="NETTVERK"><StackPanel Margin="14"><TextBlock Text="NETTVERK OG RAPPORTERING" Style="{StaticResource SectionTitle}"/><CheckBox Content="PSK Reporter"/><CheckBox Content="Send radioinformasjon til PSK Reporter"/><TextBlock Text="UDP-server"/><TextBox Text="127.0.0.1"/><TextBlock Text="UDP-port"/><TextBox Text="2237"/><CheckBox Content="Skriv status til fil"/><CheckBox Content="DX Cluster spots"/><TextBlock Text="OTP-nøkkel for Super Fox (16 tegn)"/><PasswordBox MaxLength="16"/></StackPanel></TabItem>
+ </TabControl><WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,12,0,0"><Button Content="STANDARDVERDIER" Click="Defaults"/><Button Content="LAGRE" Background="#087A70" Click="Save"/><Button Content="LUKK" Click="CloseClick"/></WrapPanel></Grid>
+</Window>
