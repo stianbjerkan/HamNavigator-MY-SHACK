@@ -2,9 +2,47 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from package_support import prepare_bundle,program_defaults,launch_arguments
+from package_support import prepare_bundle,program_defaults,launch_arguments,configure_shared_map_log,shared_app_logs
 
 class PackageTests(unittest.TestCase):
+    def test_shared_map_log_replaces_stale_exports_and_preserves_other_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            data = root/'Radioassistent'
+            profile = root/'HamNavigator-Map/Ginternal/app-settings.json'
+            profile.parent.mkdir(parents=True)
+            source = root/'radioassistent.adi'; source.write_text('old export kept')
+            other = {'file': r'C:\WSJT-X\wsjtx_log.adi', 'enabled': False}
+            settings = {'appLogs': [{'file': str(source), 'enabled': True},
+                        {'file': r'C:\old\HAMNAVIGATOR.ADI', 'enabled': False}, other],
+                        'qrz': {'apiKey': 'synthetic'}, 'startupLogs': ['unrelated.adi']}
+            original = json.dumps(settings).encode(); profile.write_bytes(original)
+            self.assertTrue(configure_shared_map_log(data))
+            current = json.loads(profile.read_text())
+            self.assertEqual(current['appLogs'], [{'file': str(data/'log/hamnavigator.adi'), 'enabled': True}, other])
+            self.assertEqual(current['qrz'], settings['qrz'])
+            self.assertEqual(current['startupLogs'], settings['startupLogs'])
+            self.assertEqual(source.read_text(), 'old export kept')
+            backups = list(profile.parent.glob('before-shared-log-*.json'))
+            self.assertEqual(len(backups), 1); self.assertEqual(backups[0].read_bytes(), original)
+            self.assertFalse(configure_shared_map_log(data))
+            self.assertEqual(len(list(profile.parent.glob('before-shared-log-*.json'))), 1)
+
+    def test_shared_map_log_seeds_first_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data = Path(directory)/'custom-profile'
+            self.assertTrue(configure_shared_map_log(data))
+            profile = data.parent/'HamNavigator-Map/Ginternal/app-settings.json'
+            self.assertEqual(json.loads(profile.read_text())['appLogs'][0]['file'], str(data/'log/hamnavigator.adi'))
+
+    def test_corrupt_map_settings_are_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data = Path(directory)/'Radioassistent'
+            profile = data.parent/'HamNavigator-Map/Ginternal/app-settings.json'
+            profile.parent.mkdir(parents=True); profile.write_bytes(b'broken settings')
+            with self.assertRaises(ValueError): configure_shared_map_log(data)
+            self.assertEqual(profile.read_bytes(), b'broken settings')
+
     def test_hamnavigator_log_directory_created_and_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

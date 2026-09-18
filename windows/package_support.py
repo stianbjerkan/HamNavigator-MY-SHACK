@@ -6,6 +6,41 @@ import os
 import shutil
 import tempfile
 
+def shared_app_logs(logs, data_dir):
+    """Use one authoritative HamNavigator log; keep other applications' sources.
+
+    Old export copies are removed only from the watch list, never from disk.
+    Windows paths may also arrive from another machine through old settings.
+    """
+    from pathlib import PureWindowsPath
+    managed = {'hamnavigator.adi', 'hamnavigatorlog.adi', 'radioassistent.adi'}
+    other = [entry for entry in logs if isinstance(entry, dict)
+             and PureWindowsPath(str(entry.get('file', ''))).name.lower() not in managed]
+    return [{'enabled': True, 'file': str(Path(data_dir) / 'log/hamnavigator.adi')}] + other
+
+
+def configure_shared_map_log(data_dir):
+    """Seed new profiles too; change no unrelated preferences or credentials."""
+    data_dir = Path(data_dir)
+    settings_file = data_dir.parent / 'HamNavigator-Map/Ginternal/app-settings.json'
+    settings_file.parent.mkdir(parents=True, exist_ok=True)
+    original = settings_file.read_bytes() if settings_file.exists() else None
+    settings = json.loads(original.decode('utf-8-sig')) if original else {'defaultsApplied': True}
+    updated = shared_app_logs(settings.get('appLogs', []), data_dir)
+    if settings.get('appLogs') == updated:
+        return False
+    if original is not None:
+        import datetime
+        backup = settings_file.with_name('before-shared-log-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f') + '.json')
+        with backup.open('xb') as stream:
+            stream.write(original)
+    settings['appLogs'] = updated
+    if (settings_file.read_bytes() if settings_file.exists() else None) != original:
+        raise RuntimeError(ui_language.t('Map-innstillingene er endret. Prøv igjen.'))
+    from shared_log import atomic
+    atomic(settings_file, json.dumps(settings, ensure_ascii=False, indent=2))
+    return True
+
 def bundled(root):
     return (Path(root)/'BUNDLE.json').is_file()
 
@@ -32,20 +67,7 @@ def prepare_bundle(root, data_dir):
     if (root/'release/HamNavigator/HamNavigator.exe').is_file():
         # Clean archives can omit the empty directory required by the native logger.
         (root/'release/HamNavigator/log').mkdir(parents=True, exist_ok=True)
-        profile=data_dir.parent/'HamNavigator-Map'/'Ginternal'
-        profile.mkdir(parents=True,exist_ok=True)
-        settings_file=profile/'app-settings.json'
-        shared_path=str(data_dir/'log/hamnavigator.adi')
-        if settings_file.exists():
-            settings=json.loads(settings_file.read_text(encoding='utf-8-sig'))
-            logs=settings.get('appLogs',[])
-            cleaned=[entry for entry in logs if Path(entry.get('file','')).name.lower() not in ('hamnavigatorlog.adi','hamnavigator.adi')]
-            updated=[{'enabled':True,'file':shared_path}]+cleaned
-            if logs!=updated:
-                backup=settings_file.with_name('before-shared-log-settings.json')
-                if not backup.exists():shutil.copy2(settings_file,backup)
-                settings['appLogs']=updated
-                temp=settings_file.with_suffix('.shared.tmp');temp.write_text(json.dumps(settings,ensure_ascii=False,indent=2),encoding='utf-8');os.replace(temp,settings_file)
+        configure_shared_map_log(data_dir)
         return  # HamNavigator keeps its own settings; Map seeds its own profile.
     target=data_dir/'programs/MSHV'
     if not target.exists():

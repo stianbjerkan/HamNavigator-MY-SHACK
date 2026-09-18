@@ -1,5 +1,13 @@
-HamNavigator MY SHACK 1.9.15
+HamNavigator MY SHACK 1.9.16
 18. september 2026
+
+Map følger nå den samme log/hamnavigator.adi som Digital og MY SHACK. Kilden
+velges automatisk og kan ikke deaktiveres som en vanlig ekstra app-logg.
+Gamle radioassistent.adi-eksportfiler beholdes på disk, men brukes ikke som
+løpende HamNavigator-logg. Andre loggprogrammers kilder beholdes.
+Nye lokale filendringer leses automatisk i Map uten ny opplasting til tjenester.
+Radioassistent er bare det eldre interne datamappenavnet; ikke gi det nytt
+navn manuelt. Den eksisterende profilen, passord og logger beholdes.
 
 Eksporter ADIF foreslår nå hamnavigator.adi. POTA- og SOTA-utvalg beholder
 pota.adi og sota.adi. Eksporten er en kopi; den aktive fellesloggen som Map

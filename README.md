@@ -34,8 +34,9 @@ Bruk **Issues** på denne siden for feil og forslag. Oppgi programversjon, Windo
 
 ## Utvikling og kildekode
 
-Aktuell Windows-klient ligger i [`windows/`](windows/). Versjon 1.9.15 retter
-standardnavnet for ADIF-eksport til `hamnavigator.adi`. Kildekodearkivene under
+Aktuell Windows-klient ligger i [`windows/`](windows/). Versjon 1.9.16 kobler
+Digital, MY SHACK og Map til samme aktive `hamnavigator.adi`. Map følger ikke
+lenger gamle `radioassistent.adi`-eksportkopier som app-logg. Kildekodearkivene under
 Releases inneholder også tilhørende Digital- og Map-kode og lisenser.
 De eldre C#/XAML-filene i roten er WPF-prototypen, ikke MY SHACK-installasjonen.
 

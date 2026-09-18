@@ -1,4 +1,4 @@
-HamNavigator MY SHACK 1.9.15
+HamNavigator MY SHACK 1.9.16
 
 Välj Språk / Language i MY SHACK för norska, engelska eller svenska.
 MY SHACK byter språk direkt. Starta om HamNavigator för att Windows-paneler,
