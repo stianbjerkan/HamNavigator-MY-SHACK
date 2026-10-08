@@ -21,6 +21,7 @@ import urllib.request
 import urllib.parse
 from portable_ops import references, activation_fields, select_log
 import portable_map
+import community
 import webbrowser
 import ui_language
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -777,6 +778,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == '/api/language':
                 return self.send({'language':ui_language.get()})
+            if path == '/api/community':
+                return self.send(community.snapshot())
+            if path in ('/community.js', '/community.css'):
+                return self.send((ROOT/path[1:]).read_text(encoding='utf-8'), content_type='text/javascript; charset=utf-8' if path.endswith('.js') else 'text/css; charset=utf-8')
             if path == '/api/health':
                 return self.send({'app':'HamNavigator MY SHACK','version':RUNNING_VERSION,'root':str(ROOT),'pid':os.getpid(),'can_stop':True,'stopping':BACKEND_STOPPING})
             if path == '/api/cloud/status':

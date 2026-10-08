@@ -1,0 +1,8 @@
+.hn-community{box-sizing:border-box;margin:20px 0;padding:22px;border:1px solid #30647d;border-radius:12px;background:#102331;color:#eef8ff;max-width:100%}
+.hn-community h2{margin:0 0 16px;color:#eef8ff;font-size:1.25rem}
+.hn-community-counts{display:flex;flex-wrap:wrap;gap:24px 64px}
+.hn-community-counts>div{display:flex;flex-direction:column;gap:8px}
+.hn-community-counts strong{font-size:2rem;line-height:1.2;color:#64ddff;font-variant-numeric:tabular-nums}
+.hn-community p{font-size:.9rem;line-height:1.5;color:#c2d9e6;margin:12px 0 0}
+.hn-community-status{min-height:1.5em}
+.hn-community.container{margin:24px auto;width:calc(100% - 40px)}

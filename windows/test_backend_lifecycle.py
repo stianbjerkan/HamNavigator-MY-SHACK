@@ -11,6 +11,26 @@ import radio_assistant as app
 
 
 class BackendLifecycleTests(unittest.TestCase):
+    def test_community_http_routes_without_account_data(self):
+        web=app.ThreadingHTTPServer(('127.0.0.1',0),app.Handler)
+        worker=threading.Thread(target=web.serve_forever,daemon=True)
+        with patch.object(app,'PORT',web.server_port),patch.object(app,'CLOUD',None),patch.object(app.community,'snapshot',return_value={'available':False}):
+            worker.start()
+            try:
+                url=f'http://127.0.0.1:{web.server_port}'
+                with urllib.request.urlopen(url+'/api/community',timeout=3) as response:
+                    self.assertEqual(json.load(response),{'available':False})
+                for path in ('/community.js','/community.css'):
+                    with urllib.request.urlopen(url+path,timeout=3) as response:
+                        self.assertEqual(response.read(),(app.ROOT/path[1:]).read_bytes())
+                for language in ('nb','en','sv'):
+                    with patch.object(app.ui_language,'get',return_value=language):
+                        with urllib.request.urlopen(url,timeout=3) as response:
+                            page=response.read().decode()
+                        self.assertIn('src="/community.js"',page)
+                        self.assertIn('href="/community.css"',page)
+            finally:web.shutdown();web.server_close();worker.join(3)
+
     def test_installer_start_uses_backend_then_no_radio_resume(self):
         import sys
         with patch.object(sys,'argv',['radio_assistant.py','--no-resume']), \
