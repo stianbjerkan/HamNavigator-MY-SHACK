@@ -1730,5 +1730,6 @@
   "Cloud kunne ikke behandle forespørselen nå.": "Cloud could not process the request right now.",
   "Forespørselen er for stor.": "The request is too large.",
   "For mange forsøk. Vent litt og prøv igjen.": "Too many attempts. Wait a moment and try again.",
-  "Ingen tilgang.": "Access denied."
+  "Ingen tilgang.": "Access denied.",
+  " MB).\nTrykk «Oppdater nå» for å laste ned og starte installasjonen. HamNavigator starter lagring og normal avslutning straks installatøren åpnes. Fullfør åpne dialoger i Digital og Map. Avslutt radiokjøringen først.": " MB).\nPress Update now to download and start installation. HamNavigator begins saving and normal shutdown as soon as the installer opens. Complete open dialogs in Digital and Map. Stop radio operation first."
 }

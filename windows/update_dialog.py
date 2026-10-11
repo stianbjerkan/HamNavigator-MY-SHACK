@@ -28,6 +28,8 @@ class UpdateWorker(QThread):
 
 
 class UpdateDialog(QDialog):
+    installation_started = Signal()
+
     def __init__(self, root, parent):
         super().__init__(parent)
         self.root, self.worker, self.info, self.installer = Path(root), None, None, None
@@ -93,7 +95,7 @@ class UpdateDialog(QDialog):
         self.info = info
         self.progress.setValue(0)
         if info:
-            self.status.setText(f"{ui_language.t('Versjon ')}{info['version']}{ui_language.t(' er tilgjengelig (')}{info['size'] / 1024 ** 2:.0f}{ui_language.t(' MB).\nTrykk «Oppdater nå» for å laste ned og starte installasjonen. Installasjonen lagrer og lukker HamNavigator, Digital og Map før oppdatering. Avslutt radiokjøringen først.')}")
+            self.status.setText(f"{ui_language.t('Versjon ')}{info['version']}{ui_language.t(' er tilgjengelig (')}{info['size'] / 1024 ** 2:.0f}{ui_language.t(' MB).\nTrykk «Oppdater nå» for å laste ned og starte installasjonen. HamNavigator starter lagring og normal avslutning straks installatøren åpnes. Fullfør åpne dialoger i Digital og Map. Avslutt radiokjøringen først.')}")
             self.action.setText(ui_language.t('Oppdater nå'))
         else:
             self.status.setText(ui_language.t('Du har nyeste versjon – ') + self.version + '.')
@@ -125,7 +127,9 @@ class UpdateDialog(QDialog):
         self.status.setText(ui_language.t('Filen er kontrollert. Installasjonsprogrammet er startet.\nFølg trinnene der. HamNavigator lagres og lukkes før filene oppdateres.'))
         self.progress.setValue(100)
         self.action.setEnabled(False)
-        # Installer preflight closes the existing shell before Restart Manager.
+        # Begin normal application shutdown now, not only when the installer
+        # eventually reaches preflight. Never request shutdown on launch failure.
+        self.installation_started.emit()
 
     def reject(self):
         if self.busy():

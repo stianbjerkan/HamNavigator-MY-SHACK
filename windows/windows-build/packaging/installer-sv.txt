@@ -1,4 +1,9 @@
-HamNavigator MY SHACK 1.9.16
+HamNavigator MY SHACK 1.9.19
+
+Uppdateringsknappen börjar nu spara och stänga normalt så snart installationsprogrammet
+öppnas. Slutför dialoger i Digital/Map; installationen väntar före filbyte. Från en
+drabbad äldre version kan installationsfilen behöva startas manuellt en gång efter
+normal avslutning. Avinstallera inte först. Fel visar kod och loggfilens plats.
 
 Välj Språk / Language i MY SHACK för norska, engelska eller svenska.
 MY SHACK byter språk direkt. Starta om HamNavigator för att Windows-paneler,

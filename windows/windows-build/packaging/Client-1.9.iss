@@ -22,6 +22,7 @@ DisableProgramGroupPage=yes
 InfoAfterFile=..\..\bygg\klient\LES-MEG.txt
 CloseApplications=yes
 RestartApplications=no
+SetupLogging=yes
 
 [Languages]
 Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"; InfoAfterFile: "installer-sv.txt"

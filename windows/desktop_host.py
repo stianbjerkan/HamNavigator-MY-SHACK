@@ -410,11 +410,18 @@ class Shell(QMainWindow):
     def show_updates(self):
         if self.update_dialog is None:
             self.update_dialog = UpdateDialog(ROOT, self)
+            self.update_dialog.installation_started.connect(self.close_for_update)
         elif not self.update_dialog.isVisible() and not self.update_dialog.busy():
             self.update_dialog.check()
         self.update_dialog.show()
         self.update_dialog.raise_()
         self.update_dialog.activateWindow()
+
+    def close_for_update(self):
+        # The user's update action already launched the verified installer.
+        # Keep all normal save, Digital/Map close and refused-close safeguards.
+        self.update_dialog.hide()
+        self.close()
 
     def label(self, key):
         return {'':ui_language.t('Tomt panel'), 'home':'HamNavigator MY SHACK', **LABELS}.get(key, self.extra_programs.get(key,{}).get('name',ui_language.t('Program')))

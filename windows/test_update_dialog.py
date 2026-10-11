@@ -38,6 +38,8 @@ class DialogTests(unittest.TestCase):
              patch('update_dialog.download_update', return_value=path) as download, \
              patch('update_dialog.subprocess.Popen') as launch:
             dialog = UpdateDialog(Path(__file__).parent, None)
+            shutdown = []
+            dialog.installation_started.connect(lambda: shutdown.append((dialog.busy(), launch.call_count)))
             self.wait(dialog)
             self.assertEqual(dialog.action.text(), 'Oppdater nå')
             dialog.action.click()
@@ -45,9 +47,27 @@ class DialogTests(unittest.TestCase):
             self.wait(dialog)
             self.assertEqual(download.call_count, 1)
             self.assertEqual(launch.call_count, 1)
+            self.assertEqual(shutdown, [(False, 1)])
             self.assertEqual(launch.call_args.args[0][0], str(path))
             self.assertFalse(dialog.action.isEnabled())
             self.assertIn('kontrollert', dialog.status.text())
+            dialog.close()
+
+    def test_launch_failure_keeps_app_open_and_retry_can_request_shutdown(self):
+        path = Path('C:/test updates/HamNavigator-MY-SHACK-Setup.exe')
+        with patch('update_dialog.check_update', return_value=None), \
+             patch('update_dialog.subprocess.Popen', side_effect=[OSError('blocked'), object()]) as launch:
+            dialog = UpdateDialog(Path(__file__).parent, None)
+            self.wait(dialog)
+            shutdown = []
+            dialog.installation_started.connect(lambda: shutdown.append(True))
+            dialog.install(path)
+            self.assertEqual(shutdown, [])
+            self.assertIn('blocked', dialog.status.text())
+            self.assertTrue(dialog.action.isEnabled())
+            dialog.action.click()
+            self.assertEqual(launch.call_count, 2)
+            self.assertEqual(shutdown, [True])
             dialog.close()
 
     def test_cancel_waits_for_worker_and_never_launches(self):
@@ -58,11 +78,14 @@ class DialogTests(unittest.TestCase):
              patch('update_dialog.download_update', side_effect=downloading), \
              patch('update_dialog.subprocess.Popen') as launch:
             dialog = UpdateDialog(Path(__file__).parent, None)
+            shutdown = []
+            dialog.installation_started.connect(lambda: shutdown.append(True))
             self.wait(dialog)
             dialog.action.click()
             dialog.reject()
             self.wait(dialog)
             launch.assert_not_called()
+            self.assertEqual(shutdown, [])
             self.assertIn('avbrutt', dialog.status.text())
             dialog.close()
 
