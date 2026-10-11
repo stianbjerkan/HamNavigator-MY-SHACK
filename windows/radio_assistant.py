@@ -33,6 +33,7 @@ from qso_sync import canonical as sync_contact, LOCAL_FIELDS
 ROOT = Path(__file__).resolve().parent
 RUNNING_VERSION = (ROOT/'VERSION').read_text().strip()
 BACKEND_STOPPING = False
+BACKEND_SHUTDOWN_PHASE = None
 ACTIVE_POSTS = 0
 BACKEND_CONDITION = threading.Condition()
 MODULE_CATALOG = json.loads((ROOT / 'modules.json').read_text(encoding='utf-8'))
@@ -783,7 +784,7 @@ class Handler(BaseHTTPRequestHandler):
             if path in ('/community.js', '/community.css'):
                 return self.send((ROOT/path[1:]).read_text(encoding='utf-8'), content_type='text/javascript; charset=utf-8' if path.endswith('.js') else 'text/css; charset=utf-8')
             if path == '/api/health':
-                return self.send({'app':'HamNavigator MY SHACK','version':RUNNING_VERSION,'root':str(ROOT),'pid':os.getpid(),'can_stop':True,'stopping':BACKEND_STOPPING})
+                return self.send({'app':'HamNavigator MY SHACK','version':RUNNING_VERSION,'root':str(ROOT),'pid':os.getpid(),'can_stop':True,'stopping':BACKEND_STOPPING,'shutdown_phase':BACKEND_SHUTDOWN_PHASE})
             if path == '/api/cloud/status':
                 return self.send(CLOUD.view() if CLOUD else {'message':ui_language.t('Start programmet på nytt for å aktivere skyklienten.')})
             if path == '/language.js':
@@ -1027,19 +1028,27 @@ def healthy():
     return bool(info and info.get('app')=='HamNavigator MY SHACK' and info.get('version')==RUNNING_VERSION and info.get('root')==str(ROOT) and not info.get('stopping'))
 
 def stop_backend(server):
-    global BACKEND_STOPPING
-    if CLOUD:CLOUD.stop.set()
+    global BACKEND_STOPPING, BACKEND_SHUTDOWN_PHASE
+    if CLOUD:
+        CLOUD.stop.set()
+        CLOUD.wake.set()
+    BACKEND_SHUTDOWN_PHASE='requests'
     with BACKEND_CONDITION:BACKEND_CONDITION.wait_for(lambda:ACTIVE_POSTS==0)
     # Finish any sync that was already in progress before flushing local state.
     lock=CLOUD.lock if CLOUD else LOCK
     try:
+        BACKEND_SHUTDOWN_PHASE='cloud'
         with lock:
+            BACKEND_SHUTDOWN_PHASE='radio'
             set_udp(False,STATE['settings']['udp_port']);DX_STOP.set();AUDIO.stop()
+            BACKEND_SHUTDOWN_PHASE='save'
             with LOCK:refresh_shared();persist()
-            server.shutdown()
+        BACKEND_SHUTDOWN_PHASE='http'
+        server.shutdown()
     except Exception as exc:
         # Keep this process/data available if the final disk flush fails.
         with BACKEND_CONDITION:BACKEND_STOPPING=False
+        BACKEND_SHUTDOWN_PHASE='failed'
         if CLOUD:
             CLOUD.config['automatic']=False
             CLOUD.status['message']=ui_language.t('Kunne ikke avslutte og lagre: ')+str(exc)

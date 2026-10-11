@@ -96,6 +96,8 @@ class Outbox:
     def tick(self):
         """At most one external send per pass. Persist before each irreversible step."""
         with self.s.lock:
+            stop=getattr(self.s,'stop',None)
+            if stop is not None and stop.is_set():return
             if not self.s.authorized or not self.s.config.get('token'):return
             folder=self.folder();baseline=self.s.ops.baseline();local=self.s.ops.local()
             for path in sorted(folder.glob('*.json')):

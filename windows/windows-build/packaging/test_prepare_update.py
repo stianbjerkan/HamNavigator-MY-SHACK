@@ -22,7 +22,7 @@ class PreflightTests(unittest.TestCase):
     def pause(self,seconds):self.clock+=seconds
     def run_prepare(self,running,**extra):
         extra.setdefault('close_shell', Mock(return_value=set()))
-        return update.prepare(self.root,timeout=1,running=running,launch=self.launch,
+        return update.prepare(self.root,timeout=1,backend_timeout=1,running=running,launch=self.launch,
             now=lambda:self.clock,pause=self.pause,**extra)
     def test_closed_install_does_not_start_app(self):
         self.run_prepare(lambda root:set())
@@ -64,6 +64,42 @@ class PreflightTests(unittest.TestCase):
         self.run_prepare(Mock(side_effect=[{1},{1},{1},set()]),
             inspect_backend=lambda *a:{'pid':1,'stopping':True},close_backend=stop)
         stop.assert_not_called()
+    def test_verified_stopping_backend_can_finish_after_gui_timeout(self):
+        stop=Mock()
+        update.prepare(self.root,timeout=1,backend_timeout=3,
+            running=lambda root:{1} if self.clock<2 else set(),
+            inspect_backend=lambda *a:{'pid':1,'stopping':True},
+            close_shell=lambda *a:set(),close_backend=stop,launch=self.launch,
+            now=lambda:self.clock,pause=self.pause)
+        self.assertEqual(self.clock,2)
+        stop.assert_not_called()
+        self.launch.assert_not_called()
+
+    def test_verified_backend_still_has_finite_deadline(self):
+        with self.assertRaises(TimeoutError):
+            update.prepare(self.root,timeout=1,backend_timeout=3,
+                running=lambda root:{1},inspect_backend=lambda *a:{'pid':1,'stopping':True},
+                close_shell=lambda *a:set(),launch=self.launch,
+                now=lambda:self.clock,pause=self.pause)
+        self.assertEqual(self.clock,3)
+    def test_failed_save_after_stopping_does_not_extend_or_retry(self):
+        stop=Mock()
+        with self.assertRaises(RuntimeError):
+            update.prepare(self.root,timeout=1,backend_timeout=300,
+                running=lambda root:{1},
+                inspect_backend=lambda *a:{'pid':1,'stopping':self.clock<.5},
+                close_shell=lambda *a:set(),close_backend=stop,
+                now=lambda:self.clock,pause=self.pause)
+        self.assertEqual(self.clock,1)
+        stop.assert_not_called()
+
+    def test_another_process_does_not_inherit_backend_grace_period(self):
+        with self.assertRaises(TimeoutError):
+            update.prepare(self.root,timeout=1,backend_timeout=300,
+                running=lambda root:{1} if self.clock<.5 else {2},
+                inspect_backend=lambda root,pids:{'pid':1,'stopping':True} if pids=={1} else None,
+                close_shell=lambda *a:set(),now=lambda:self.clock,pause=self.pause)
+        self.assertEqual(self.clock,1)
     def test_shutdown_503_after_process_exit_is_safe(self):
         error=urllib.error.HTTPError(update.ORIGIN,503,'unavailable',{},None)
         self.run_prepare(Mock(side_effect=[{1},{1},set(),set()]),

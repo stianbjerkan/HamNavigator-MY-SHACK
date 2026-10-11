@@ -1,4 +1,8 @@
-HamNavigator MY SHACK 1.9.21
+HamNavigator MY SHACK 1.9.22
+
+In-flight Cloud work can exceed 45 seconds. A verified stopping backend gets
+up to five minutes to finish saving. Wait in setup. No process is killed.
+New sync and delivery passes do not start after shutdown is requested.
 
 A backend already saving and stopping is allowed to finish without another
 stop command. Concurrent shutdown HTTP 503 is checked against that backend.

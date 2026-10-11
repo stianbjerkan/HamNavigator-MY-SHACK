@@ -37,7 +37,7 @@ def backend_server(fail_save=False):
         worker = threading.Thread(target=web.serve_forever, daemon=True)
         lock = threading.Lock()
         lock.acquire()  # A sync already in progress delays the real shutdown.
-        cloud = SimpleNamespace(lock=lock, stop=threading.Event(), config={}, status={})
+        cloud = SimpleNamespace(lock=lock, stop=threading.Event(), wake=threading.Event(), config={}, status={})
         saved = threading.Event()
         released = False
 
@@ -62,7 +62,7 @@ def backend_server(fail_save=False):
         origin = f'http://127.0.0.1:{web.server_port}'
         timer = None
         with patch.multiple(app, PORT=web.server_port, DATA_DIR=root, CLOUD=cloud,
-                            BACKEND_STOPPING=False, ACTIVE_POSTS=0), \
+                            BACKEND_STOPPING=False, BACKEND_SHUTDOWN_PHASE=None, ACTIVE_POSTS=0), \
              patch.object(app, 'refresh_shared'), patch.object(app, 'persist', side_effect=save), \
              patch.object(app, 'set_udp'), patch.object(app.AUDIO, 'stop'), \
              patch.object(app.DX_STOP, 'set'), patch.object(update, 'ORIGIN', origin):
@@ -89,7 +89,7 @@ def backend_server(fail_save=False):
 
 class InstallerBackendTests(unittest.TestCase):
     def prepare(self, backend, **kwargs):
-        return update.prepare(backend.root, timeout=2, running=backend.running,
+        return update.prepare(backend.root, timeout=2, backend_timeout=2, running=backend.running,
             close_shell=lambda *args: {backend.pid}, **kwargs)
 
     def test_already_stopping_backend_is_awaited_without_duplicate_post(self):
@@ -101,6 +101,24 @@ class InstallerBackendTests(unittest.TestCase):
             self.prepare(backend, close_backend=close)
             close.assert_not_called()
             self.assertTrue(backend.saved.is_set())
+
+    def test_shutdown_health_identifies_cloud_wait_without_account_data(self):
+        with backend_server() as backend:
+            backend.request_stop()
+            # The response can finish just before the stop thread acquires the
+            # request-drain condition. Wait only in this isolated test.
+            import time
+            deadline=time.monotonic()+1
+            while app.BACKEND_SHUTDOWN_PHASE!='cloud' and time.monotonic()<deadline:
+                time.sleep(.01)
+            info=update.backend(backend.root,{backend.pid})
+            self.assertTrue(info['stopping'])
+            self.assertEqual(info['shutdown_phase'],'cloud')
+            self.assertNotIn('token',info)
+            self.assertNotIn('email',info)
+            self.assertTrue(app.CLOUD.wake.is_set())
+            backend.release_later()
+            self.prepare(backend)
 
     def test_shutdown_race_503_is_rechecked_and_waited_until_saved(self):
         with backend_server() as backend:
@@ -136,7 +154,7 @@ class InstallerBackendTests(unittest.TestCase):
         with backend_server(fail_save=True) as backend:
             backend.request_stop()
             backend.release_later()
-            with self.assertRaises(TimeoutError):
+            with self.assertRaises(RuntimeError):
                 self.prepare(backend)
             self.assertFalse(backend.saved.is_set())
 

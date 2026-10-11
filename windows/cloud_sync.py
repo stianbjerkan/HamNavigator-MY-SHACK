@@ -130,6 +130,7 @@ class Sync:
             return self.view()
     def presence(self):
         with self.lock:
+            if self.stop.is_set():return
             self.last_presence=time.monotonic()
             if not self.config.get('token'):
                 self.authorized=False;self.is_admin=False;return
@@ -251,6 +252,7 @@ class Sync:
             return self.view()
     def sync(self,choices=None):
         with self.lock:
+            if self.stop.is_set():return self.view()
             self.started_at=time.monotonic()
             self.status['syncing']=True
             try:
@@ -394,9 +396,13 @@ class Sync:
                     try:self.presence()
                     except Exception as exc:
                         if not self.authorized:self.status['message']=str(exc)
+                # Finish an in-flight operation, but never start another after
+                # shutdown. A gateway exchange may itself exceed 45 seconds.
+                if self.stop.is_set():break
                 if self.config.get('automatic') and self.authorized:
                     try:self.sync()
                     except Exception:pass  # sync retains the error for the UI.
+                if self.stop.is_set():break
                 if self.authorized:
                     try:
                         from log_delivery import Outbox
@@ -404,6 +410,7 @@ class Sync:
                     except Exception as error:
                         try:self.ops.history.record(ui_language.t('Loggtjenester'),error)
                         except OSError:pass
+                if self.stop.is_set():break
                 self.wake.wait(10)
                 self.wake.clear()
         self.worker=threading.Thread(target=work,daemon=True,name='HamNavigatorCloud')

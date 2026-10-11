@@ -118,7 +118,7 @@ def stop_backend():
         json.load(response)
 
 
-def prepare(root, timeout=45, *, running=processes_in, now=time.monotonic,
+def prepare(root, timeout=45, *, backend_timeout=300, running=processes_in, now=time.monotonic,
             pause=time.sleep, launch=subprocess.run, inspect_backend=backend,
             close_backend=stop_backend, close_shell=request_shell_close,
             report=lambda **entry: None):
@@ -146,6 +146,11 @@ def prepare(root, timeout=45, *, running=processes_in, now=time.monotonic,
                check=True, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     deadline = now() + timeout
     requested_backend = False
+    backend_pid = None
+    backend_deadline = None
+    stopping_seen = False
+    next_health = 0
+    next_progress = 0
     last_pending = None
     while True:
         pending = running(root)
@@ -184,7 +189,34 @@ def prepare(root, timeout=45, *, running=processes_in, now=time.monotonic,
                 # A stop request/observed shutdown is not completion. Continue
                 # checking actual process exit; failed saving still times out.
                 requested_backend = True
-        if now() >= deadline:
+                backend_pid = pid
+        if backend_pid is not None and pending == {backend_pid} and now() >= next_health:
+            next_health = now() + 1
+            current = inspect_backend(root, pending)
+            if current and current['pid'] == backend_pid:
+                if current.get('stopping'):
+                    stopping_seen = True
+                    if backend_deadline is None:
+                        # Legacy Cloud exchanges alone can exceed 45 seconds.
+                        # Extend ONLY for this verified backend, never a GUI,
+                        # another installation, a failed save or an arbitrary PID.
+                        backend_deadline = now() + backend_timeout
+                        report(phase='backend_grace_period', pid=backend_pid,
+                               timeout_seconds=backend_timeout)
+                    if now() >= next_progress:
+                        next_progress = now() + 15
+                        phase = current.get('shutdown_phase')
+                        if phase not in ('requests', 'cloud', 'radio', 'save', 'http'):
+                            phase = 'legacy'
+                        report(phase='backend_waiting', pid=backend_pid, shutdown_phase=phase,
+                               remaining_seconds=max(0, round(backend_deadline-now())))
+                elif stopping_seen:
+                    # Final saving failed and the backend deliberately stayed
+                    # alive. Do not retry shutdown or replace any program files.
+                    report(phase='backend_save_failed', pid=backend_pid)
+                    raise RuntimeError('Backend could not finish normal shutdown')
+        active_deadline = backend_deadline if backend_deadline is not None and pending == {backend_pid} else deadline
+        if now() >= active_deadline:
             raise TimeoutError('Normal shutdown incomplete; no files replaced')
         pause(.25)
 

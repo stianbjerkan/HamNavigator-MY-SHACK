@@ -15,7 +15,7 @@ begin
   Result := '';
   PythonExe := ExpandConstant('{app}\runtime\python.exe');
   if not FileExists(PythonExe) then exit;
-  WizardForm.PreparingLabel.Caption := HNInstallerText('Lagrer og lukker HamNavigator, Digital og Map ...', 'Saving and closing HamNavigator, Digital and Map ...', 'Sparar och stänger HamNavigator, Digital och Map ...');
+  WizardForm.PreparingLabel.Caption := HNInstallerText('Lagrer og lukker HamNavigator, Digital og Map ... Vent mens pågående Cloud-arbeid fullføres (opptil 5 minutter).', 'Saving and closing HamNavigator, Digital and Map ... Please wait for in-flight Cloud work (up to 5 minutes).', 'Sparar och stänger HamNavigator, Digital och Map ... Vänta medan pågående Cloud-arbete slutförs (upp till 5 minuter).');
   ExtractTemporaryFile('prepare_update.py');
   Params := '-E -s "' + ExpandConstant('{tmp}\prepare_update.py') + '" "' + ExpandConstant('{app}') + '" "' + ExpandConstant('{tmp}\prepare-update.log') + '"';
   Log('HamNavigator preflight: requesting normal save and shutdown.');

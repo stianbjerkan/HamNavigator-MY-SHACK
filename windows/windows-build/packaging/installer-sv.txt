@@ -1,4 +1,9 @@
-HamNavigator MY SHACK 1.9.21
+HamNavigator MY SHACK 1.9.22
+
+Pågående Cloud-arbete kan ta mer än 45 sekunder. En verifierad tjänst som
+avslutas får upp till fem minuter att spara klart. Vänta i installationen.
+Ingen process tvångsavslutas. Ingen ny synkroniserings- eller leveransomgång
+startas efter begärd avslutning.
 
 En bakgrundstjänst som redan sparar och avslutas får slutföra utan ett nytt
 stoppkommando. HTTP 503 vid samtidig avslutning kontrolleras mot samma tjänst.

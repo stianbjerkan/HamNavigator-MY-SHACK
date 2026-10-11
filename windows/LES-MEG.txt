@@ -1,4 +1,4 @@
-HamNavigator MY SHACK 1.9.21
+HamNavigator MY SHACK 1.9.22
 11. oktober 2026
 
 Map følger nå den samme log/hamnavigator.adi som Digital og MY SHACK. Kilden
@@ -25,6 +25,10 @@ En bakgrunnstjeneste som allerede lagrer og avsluttes får fullføre uten en
 ny stoppkommando. HTTP 503 ved samtidig avslutning kontrolleres mot samme
 tjenestes status. Installasjonen venter alltid til prosessene er borte; en
 lagringsfeil eller et tidsavbrudd stanser fortsatt filbytte.
+Pågående Cloud-arbeid kan ta mer enn 45 sekunder. En bekreftet bakgrunnstjeneste
+som avsluttes får opptil fem minutter til å lagre og bli ferdig. Vent i
+installasjonsvinduet. Ingen tvangsavslutning eller filbytte før prosessen er borte.
+Nye synkroniserings- og leveringsrunder starter ikke etter begjært avslutning.
 Programmet starter uten automatisk gjenopptatt sending.
 
 Språk / Language velger norsk, engelsk eller svensk. Bruksanvisningene følger
