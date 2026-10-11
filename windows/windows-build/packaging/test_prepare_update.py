@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import urllib.error
 from unittest.mock import Mock, MagicMock, patch
 import prepare_update as update
 
@@ -55,8 +56,34 @@ class PreflightTests(unittest.TestCase):
         self.launch.assert_not_called()
     def test_lone_matching_backend_stopped_once_and_waited(self):
         stop=Mock()
-        self.run_prepare(Mock(side_effect=[{1},{1},{1},set()]),inspect_backend=lambda *a:1,close_backend=stop)
+        self.run_prepare(Mock(side_effect=[{1},{1},{1},set()]),inspect_backend=lambda *a:{'pid':1,'stopping':False},close_backend=stop)
         stop.assert_called_once_with()
+        self.launch.assert_not_called()
+    def test_stopping_backend_is_only_waited_for(self):
+        stop=Mock()
+        self.run_prepare(Mock(side_effect=[{1},{1},{1},set()]),
+            inspect_backend=lambda *a:{'pid':1,'stopping':True},close_backend=stop)
+        stop.assert_not_called()
+    def test_shutdown_503_after_process_exit_is_safe(self):
+        error=urllib.error.HTTPError(update.ORIGIN,503,'unavailable',{},None)
+        self.run_prepare(Mock(side_effect=[{1},{1},set(),set()]),
+            inspect_backend=lambda *a:{'pid':1,'stopping':False},
+            close_backend=Mock(side_effect=error))
+    def test_connection_closed_after_process_exit_is_safe(self):
+        self.run_prepare(Mock(side_effect=[{1},{1},set(),set()]),
+            inspect_backend=lambda *a:{'pid':1,'stopping':False},
+            close_backend=Mock(side_effect=urllib.error.URLError('connection closed')))
+    def test_shutdown_503_with_different_process_still_blocks(self):
+        error=urllib.error.HTTPError(update.ORIGIN,503,'unavailable',{},None)
+        with self.assertRaises(urllib.error.HTTPError):
+            self.run_prepare(Mock(side_effect=[{1},{1},{2}]),
+                inspect_backend=lambda *a:{'pid':1,'stopping':False},
+                close_backend=Mock(side_effect=error))
+    def test_connection_error_while_not_stopping_still_blocks(self):
+        with self.assertRaises(urllib.error.URLError):
+            self.run_prepare(lambda *a:{1},
+                inspect_backend=lambda *a:{'pid':1,'stopping':False},
+                close_backend=Mock(side_effect=urllib.error.URLError('connection failed')))
     def test_other_backend_is_never_stopped(self):
         stop=Mock()
         with self.assertRaises(TimeoutError):
@@ -67,7 +94,7 @@ class PreflightTests(unittest.TestCase):
         def inspect(info):
             with patch.object(update.urllib.request,'urlopen',return_value=io.BytesIO(json.dumps(info).encode())):
                 return update.backend(self.root,{1})
-        self.assertEqual(inspect(valid),1)
+        self.assertEqual(inspect(valid),valid)
         for override in ({'root':str(self.root)+'-other'},{'pid':2},{'app':'other'},{'can_stop':False}):
             self.assertIsNone(inspect({**valid,**override}))
 
@@ -86,6 +113,15 @@ class PreflightTests(unittest.TestCase):
         with patch.object(update, 'prepare', side_effect=TimeoutError('unsaved')):
             self.assertEqual(update.main([str(self.root), str(log)]), 2)
         self.assertEqual(json.loads(log.read_text())['error_type'], 'TimeoutError')
+
+    def test_cli_records_http_status_without_private_response_body(self):
+        log = self.root / 'http.log'
+        error = urllib.error.HTTPError('http://private-address', 403, 'private-reason',
+                                      {}, io.BytesIO(b'private-token'))
+        with patch.object(update, 'prepare', side_effect=error):
+            self.assertEqual(update.main([str(self.root), str(log)]), 3)
+        self.assertEqual(json.loads(log.read_text())['http_status'], 403)
+        self.assertNotIn('private', log.read_text())
 
 
 class PipeIdentityTests(unittest.TestCase):

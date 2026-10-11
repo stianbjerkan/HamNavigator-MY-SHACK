@@ -1,4 +1,8 @@
-HamNavigator MY SHACK 1.9.20
+HamNavigator MY SHACK 1.9.21
+
+En bakgrundstjänst som redan sparar och avslutas får slutföra utan ett nytt
+stoppkommando. HTTP 503 vid samtidig avslutning kontrolleras mot samma tjänst.
+Installationen väntar på processavslut och stoppar vid sparfel eller tidsgräns.
 
 Använd den inbyggda uppdateringsknappen. Det nya installationsprogrammet stänger
 äldre versioner via deras befintliga lokala anslutning utan att starta grafikdelen

@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 
 ORIGIN = 'http://127.0.0.1:18763'
@@ -103,7 +104,7 @@ def backend(root, pids):
                 or os.path.normcase(str(Path(info.get('root', '')).resolve()))
                 != os.path.normcase(str(root))):
             return None
-        return info['pid']
+        return info
     except (OSError, ValueError):
         return None
 
@@ -128,7 +129,12 @@ def prepare(root, timeout=45, *, running=processes_in, now=time.monotonic,
         return
     sent = close_shell(root, pending)
     report(phase='direct_shell_close', sent_pids=sorted(sent))
-    if not sent:
+    lone_backend = not sent and len(pending) == 1 and inspect_backend(root, pending) is not None
+    if lone_backend:
+        # Newer buttons can close the shell before setup gets here. A verified
+        # lone backend needs no second graphical --close process.
+        report(phase='backend_without_shell', pid=next(iter(pending)))
+    if not sent and not lone_backend:
         # Retain compatibility with legacy/no-pipe clients. A successful pipe
         # request must never restart/import the old Qt stack for a second close.
         client = root/'desktop_host.py'
@@ -150,10 +156,33 @@ def prepare(root, timeout=45, *, running=processes_in, now=time.monotonic,
             return
         # Recover a lone backend only after every GUI/Map/Digital process exits.
         if not requested_backend and len(pending) == 1:
-            pid = inspect_backend(root, pending)
-            if pid is not None:
-                report(phase='matching_backend_close', pid=pid)
-                close_backend()
+            info = inspect_backend(root, pending)
+            if info is not None:
+                pid = info['pid']
+                if info.get('stopping'):
+                    # The shell already requested shutdown. Its backend may
+                    # still be finishing a sync/disk flush; do not POST again.
+                    report(phase='backend_already_stopping', pid=pid)
+                else:
+                    report(phase='matching_backend_close', pid=pid)
+                    try:
+                        close_backend()
+                    except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
+                        # The shell can start shutdown between health and POST.
+                        # Old backends return 503 while stopping. Accept only
+                        # that status or a lost connection, and only after
+                        # verifying exit or the SAME backend's stopping state.
+                        status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
+                        if status is not None and status != 503:
+                            raise
+                        remaining = running(root)
+                        current = inspect_backend(root, remaining) if remaining == {pid} else None
+                        if remaining and not (current and current['pid'] == pid and current.get('stopping')):
+                            raise
+                        report(phase='backend_shutdown_race', pid=pid,
+                               error_type=type(exc).__name__, http_status=status)
+                # A stop request/observed shutdown is not completion. Continue
+                # checking actual process exit; failed saving still times out.
                 requested_backend = True
         if now() >= deadline:
             raise TimeoutError('Normal shutdown incomplete; no files replaced')
@@ -174,7 +203,8 @@ def main(argv):
     except Exception as exc:
         report(phase='failed', error_type=type(exc).__name__,
                child_exit=getattr(exc, 'returncode', None),
-               winerror=getattr(exc, 'winerror', None), errno=getattr(exc, 'errno', None))
+               winerror=getattr(exc, 'winerror', None), errno=getattr(exc, 'errno', None),
+               http_status=exc.code if isinstance(exc, urllib.error.HTTPError) else None)
         print('HamNavigator could not finish saving and closing. No files replaced.')
         return 2 if isinstance(exc, TimeoutError) else 3
     return 0

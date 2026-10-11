@@ -1,4 +1,8 @@
-HamNavigator MY SHACK 1.9.20
+HamNavigator MY SHACK 1.9.21
+
+A backend already saving and stopping is allowed to finish without another
+stop command. Concurrent shutdown HTTP 503 is checked against that backend.
+Setup still waits for process exit and blocks on save failure or timeout.
 
 Use the built-in Update button. The new installer closes older running versions
 through their existing local connection, without restarting their graphical stack.

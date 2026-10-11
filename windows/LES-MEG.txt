@@ -1,4 +1,4 @@
-HamNavigator MY SHACK 1.9.20
+HamNavigator MY SHACK 1.9.21
 11. oktober 2026
 
 Map følger nå den samme log/hamnavigator.adi som Digital og MY SHACK. Kilden
@@ -21,6 +21,10 @@ Ingen separat manuell installasjon trengs. Stopp radiokjøringen først og fullf
 åpne lagringsdialoger i Digital/Map. Filer byttes først etter normal avslutning.
 Avbryt et gammelt, mislykket installasjonsforsøk og åpne Oppdater på nytt for
 å hente siste utgave. Ikke avinstaller først. Feilloggen viser trinn og feilkode.
+En bakgrunnstjeneste som allerede lagrer og avsluttes får fullføre uten en
+ny stoppkommando. HTTP 503 ved samtidig avslutning kontrolleres mot samme
+tjenestes status. Installasjonen venter alltid til prosessene er borte; en
+lagringsfeil eller et tidsavbrudd stanser fortsatt filbytte.
 Programmet starter uten automatisk gjenopptatt sending.
 
 Språk / Language velger norsk, engelsk eller svensk. Bruksanvisningene følger
