@@ -1,4 +1,4 @@
-HamNavigator MY SHACK 1.9.19
+HamNavigator MY SHACK 1.9.20
 11. oktober 2026
 
 Map følger nå den samme log/hamnavigator.adi som Digital og MY SHACK. Kilden
@@ -14,11 +14,13 @@ pota.adi og sota.adi. Eksporten er en kopi; den aktive fellesloggen som Map
 skal følge finnes fortsatt under App Log(s). Oppsett og kontakter beholdes.
 
 Oppdater via Oppdater > Oppdater nå i HamNavigator. Nedlastingen kontrolleres
-med SHA-256. MY SHACK starter lagring og normal avslutning straks installatøren
-åpnes. Fullfør åpne dialoger i Digital/Map før filbytte. Stopp radiokjøringen først.
-Ved oppgradering fra en eldre utgave med denne feilen: lukk normalt og start den
-nye installasjonsfilen manuelt én gang. Ikke avinstaller først. Feil viser kode
-og plassering av installasjonsloggen.
+med SHA-256. Rettelsen følger installasjonen som også eldre oppdateringsknapper
+laster ned. Installasjonen ber den kjørende appen direkte om å lagre og lukke;
+den starter ikke den gamle grafikkdelen på nytt for å sende lukkekommandoen.
+Ingen separat manuell installasjon trengs. Stopp radiokjøringen først og fullfør
+åpne lagringsdialoger i Digital/Map. Filer byttes først etter normal avslutning.
+Avbryt et gammelt, mislykket installasjonsforsøk og åpne Oppdater på nytt for
+å hente siste utgave. Ikke avinstaller først. Feilloggen viser trinn og feilkode.
 Programmet starter uten automatisk gjenopptatt sending.
 
 Språk / Language velger norsk, engelsk eller svensk. Bruksanvisningene følger

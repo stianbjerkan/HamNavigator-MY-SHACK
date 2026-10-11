@@ -9,6 +9,7 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   PythonExe, Params: String;
+  Diagnostic: AnsiString;
   Code: Integer;
 begin
   Result := '';
@@ -16,12 +17,16 @@ begin
   if not FileExists(PythonExe) then exit;
   WizardForm.PreparingLabel.Caption := HNInstallerText('Lagrer og lukker HamNavigator, Digital og Map ...', 'Saving and closing HamNavigator, Digital and Map ...', 'Sparar och stänger HamNavigator, Digital och Map ...');
   ExtractTemporaryFile('prepare_update.py');
-  Params := '-E -s "' + ExpandConstant('{tmp}\prepare_update.py') + '" "' + ExpandConstant('{app}') + '"';
+  Params := '-E -s "' + ExpandConstant('{tmp}\prepare_update.py') + '" "' + ExpandConstant('{app}') + '" "' + ExpandConstant('{tmp}\prepare-update.log') + '"';
   Log('HamNavigator preflight: requesting normal save and shutdown.');
   if not Exec(PythonExe, Params, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) then
     Result := HNInstallerText('Kunne ikke starte normal avslutning av HamNavigator. Lukk programmet og prøv igjen.', 'Could not start a normal shutdown of HamNavigator. Close the program and try again.', 'Kunde inte starta normal avslutning av HamNavigator. Stäng programmet och försök igen.');
-  if (Result = '') and (Code <> 0) then
+  if (Result = '') and (Code = 2) then
     Result := HNInstallerText('HamNavigator er ikke ferdig med å lagre og lukke. Fullfør eventuelle dialoger i programmet og prøv igjen. Ingen programfiler er erstattet.', 'HamNavigator has not finished saving and closing. Complete any dialogs in the program and try again. No program files have been replaced.', 'HamNavigator är inte klart med att spara och stänga. Slutför eventuella dialoger i programmet och försök igen. Inga programfiler har ersatts.');
+  if (Result = '') and (Code <> 0) then
+    Result := HNInstallerText('Kontrollen av normal avslutning feilet. Se detaljene i installasjonsloggen. Ingen programfiler er erstattet.', 'The normal shutdown check failed. See the installation log for details. No program files have been replaced.', 'Kontrollen av normal avslutning misslyckades. Se installationsloggen för detaljer. Inga programfiler har ersatts.');
+  if LoadStringFromFile(ExpandConstant('{tmp}\prepare-update.log'), Diagnostic) then
+    Log('HamNavigator shutdown details: ' + String(Diagnostic));
   Log('HamNavigator preflight exit/error code: ' + IntToStr(Code));
   if Result <> '' then
     Result := Result + #13#10 + HNInstallerText('Feilkode: ', 'Error code: ', 'Felkod: ') +

@@ -1,9 +1,10 @@
-HamNavigator MY SHACK 1.9.19
+HamNavigator MY SHACK 1.9.20
 
-The Update button now begins normal saving and shutdown as soon as the installer
-opens. Finish any Digital/Map dialogs; installation still waits before replacing
-files. An affected older version may need this installer launched manually once
-after normal shutdown. Do not uninstall first. Errors include a code and log path.
+Use the built-in Update button. The new installer closes older running versions
+through their existing local connection, without restarting their graphical stack.
+No separate manual installation is needed. Finish open save dialogs in Digital/Map;
+files are replaced only after normal shutdown. Cancel an old failed installer and
+reopen Update to fetch the latest release. Errors include the failed step and code.
 
 Choose Språk / Language in MY SHACK to select Norwegian, English or Swedish.
 MY SHACK changes immediately. Restart HamNavigator for the Windows panels,
