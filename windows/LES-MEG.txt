@@ -1,5 +1,7 @@
-HamNavigator MY SHACK 1.9.22
-11. oktober 2026
+HamNavigator MY SHACK 1.9.23
+11. november 2026
+
+Digital åpner CAT- og PTT-portene i bakgrunnen. Etter portfeil kan du velge None og deretter riktig COM-port i radiooppsettet.
 
 Map følger nå den samme log/hamnavigator.adi som Digital og MY SHACK. Kilden
 velges automatisk og kan ikke deaktiveres som en vanlig ekstra app-logg.

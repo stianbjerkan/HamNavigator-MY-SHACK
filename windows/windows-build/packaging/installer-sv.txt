@@ -1,4 +1,6 @@
-HamNavigator MY SHACK 1.9.22
+HamNavigator MY SHACK 1.9.23
+
+Digital öppnar CAT- och PTT-portarna i bakgrunden. Efter ett portfel, välj None och därefter rätt COM-port i radioinställningarna.
 
 Pågående Cloud-arbete kan ta mer än 45 sekunder. En verifierad tjänst som
 avslutas får upp till fem minuter att spara klart. Vänta i installationen.

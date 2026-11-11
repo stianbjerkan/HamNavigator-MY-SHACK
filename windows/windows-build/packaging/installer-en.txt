@@ -1,4 +1,6 @@
-HamNavigator MY SHACK 1.9.22
+HamNavigator MY SHACK 1.9.23
+
+Digital now opens CAT and PTT ports in the background. After a port error, select None and then the correct COM port in radio settings.
 
 In-flight Cloud work can exceed 45 seconds. A verified stopping backend gets
 up to five minutes to finish saving. Wait in setup. No process is killed.

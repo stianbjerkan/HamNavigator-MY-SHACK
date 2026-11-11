@@ -1,0 +1,5 @@
+Qt Serial Port 5.15.2 for Windows (MinGW 8.1, Qt distribution).
+Distributed as Qt5SerialPort.dll under LGPL v3. See licenses/LGPL-3.0.txt.
+Corresponding module source: https://github.com/qt/qtserialport/tree/v5.15.2
+Build Digital with the serialport module of the same Qt kit as Qt5Core.
+Attribution and license notices for individual files are included in the Qt sources.
