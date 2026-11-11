@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory() as folder:
     import radio_assistant as radio
     from shared_log import SharedLog
     log = SharedLog(data)
-    row = {"CALL":"K1ABC","QSO_DATE":"20260105","TIME_ON":"145200","FREQ":"14.074","MODE":"FT8"}
+    row = {"APP_HAMNAVIGATOR_ID":"sample-contact", "CALL":"K1ABC","QSO_DATE":"20260105","TIME_ON":"145200","FREQ":"14.074","MODE":"FT8"}
     log.commit([], [row])
     assert log.path == data / "log/hamnavigator.adi"
     assert prepare() == data and len(log.read()) == 1

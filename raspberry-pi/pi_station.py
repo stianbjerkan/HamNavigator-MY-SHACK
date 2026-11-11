@@ -1,6 +1,7 @@
 """Pi desktop entry, Digital process and secrets for the native Linux client."""
 import base64
 import fcntl
+from functools import lru_cache
 import os
 from pathlib import Path
 import shutil
@@ -47,22 +48,28 @@ def prepare():
     return data
 
 
-def protect(text, decrypt=False):
-    """Wrap tokens, sync caches and vault data with the desktop login keyring."""
+@lru_cache(maxsize=2)
+def _key(data, allow_create):
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from keyring.backends.SecretService import Keyring
-    data = Path(os.environ["RADIOASSISTENT_DATA"])
     with (data / ".keyring.lock").open("a+b") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         ring = Keyring()
         service, account = "HamNavigator Portable", "local-data-key-v1"
         encoded = ring.get_password(service, account)
         if encoded is None:
-            if decrypt:
+            if not allow_create or (data / "cloud/connection.json").exists():
                 raise ValueError("HamNavigator: unlock or restore the desktop login keyring.")
             encoded = base64.b64encode(AESGCM.generate_key(bit_length=256)).decode()
             ring.set_password(service, account, encoded)
-    cipher = AESGCM(base64.b64decode(encoded, validate=True))
+        return base64.b64decode(encoded, validate=True)
+
+
+def protect(text, decrypt=False):
+    """Wrap tokens, sync caches and vault data with the desktop login keyring."""
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    data = Path(os.environ["RADIOASSISTENT_DATA"])
+    cipher = AESGCM(_key(data, not decrypt))
     aad = b"HamNavigator Portable v1"
     if decrypt:
         blob = base64.b64decode(text, validate=True)

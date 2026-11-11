@@ -1,6 +1,7 @@
 name: HamNavigator Portable ARM64
 on:
   push:
+    branches: [main]
     paths:
       - 'raspberry-pi/**'
       - '.github/workflows/pi-portable.yml'
@@ -41,6 +42,7 @@ jobs:
           python3 raspberry-pi/package.py /tmp/hn-build/bin/HamNavigator
           apt-get install -y --no-install-recommends ./raspberry-pi/dist/*.deb
           sh raspberry-pi/test-installed.sh
+          python3 raspberry-pi/test-recording.py
       - uses: actions/upload-artifact@v4
         with:
           name: HamNavigator-Portable-arm64

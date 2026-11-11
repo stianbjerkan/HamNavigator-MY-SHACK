@@ -31,6 +31,10 @@ with tempfile.TemporaryDirectory() as temp:
     shutil.copy2(binary, app / "HamNavigator")
     subprocess.run(["strip", str(app / "HamNavigator")], check=True)
     shutil.copytree(here / "station", root / "usr/share/hamnavigator-portable/station")
+    if Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf").is_file():
+        font = root / "usr/share/hamnavigator-portable/station/settings/resources/font/DejaVuSansMono.ttf"
+        font.parent.mkdir(parents=True, exist_ok=True)
+        font.symlink_to("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf")
     docs = root / "usr/share/doc/hamnavigator-portable"
     docs.mkdir(parents=True)
     for path in here.glob("guide-*.html"):
@@ -57,7 +61,7 @@ with tempfile.TemporaryDirectory() as temp:
         "Maintainer: LB7YK RadioLab <post@lb7yk.no>\nSection: hamradio\nPriority: optional\n"
         "Depends: python3 (>= 3.11), python3-cryptography, python3-keyring, gnome-keyring, python3-tk, "
         "libqt5widgets5, libqt5websockets5, libqt5network5, libfftw3-double3, libasound2, libpulse0, "
-        "libstdc++6, alsa-utils, xdg-utils, ca-certificates\n"
+        "libstdc++6, alsa-utils, xdg-utils, fonts-dejavu-core, ca-certificates\n"
         "Description: HamNavigator portable digital amateur-radio station for Raspberry Pi\n"
         " Native Digital station with USB audio, CAT/PTT, ADIF log and Cloud client.\n")
     out = here / "dist"
