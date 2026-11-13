@@ -1,4 +1,6 @@
-HamNavigator MY SHACK 1.9.23
+HamNavigator MY SHACK 1.9.24
+
+Översikt → Inloggade nu visar frivilligt delade anropssignaler. Välj Visa min anropssignal för att delta. Kräver Cloud 0.6.4.
 
 Digital öppnar CAT- och PTT-portarna i bakgrunden. Efter ett portfel, välj None och därefter rätt COM-port i radioinställningarna.
 

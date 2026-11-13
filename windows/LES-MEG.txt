@@ -1,5 +1,7 @@
-HamNavigator MY SHACK 1.9.23
-11. november 2026
+HamNavigator MY SHACK 1.9.24
+13. november 2026
+
+Oversikt → Pålogget nå viser frivillig delte kallesignaler. Velg Vis mitt kallesignal hvis du vil delta. Krever Cloud 0.6.4.
 
 Digital åpner CAT- og PTT-portene i bakgrunnen. Etter portfeil kan du velge None og deretter riktig COM-port i radiooppsettet.
 

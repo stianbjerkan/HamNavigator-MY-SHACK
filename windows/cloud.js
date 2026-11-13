@@ -50,7 +50,7 @@
   function render(s){
   const previously=window.hnAuthorized===true;window.hnAuthorized=s.authorized===true;
   document.body.classList.toggle('hn-authorized',window.hnAuthorized);
-  window.dispatchEvent(new CustomEvent('hamnavigator-cloud-state',{detail:{admin:s.admin===true,authorized:window.hnAuthorized}}));
+  window.dispatchEvent(new CustomEvent('hamnavigator-cloud-state',{detail:{admin:s.admin===true,authorized:window.hnAuthorized,account:JSON.stringify([s.url,s.email])}}));
   if(!window.hnAuthorized && location.hash!=='#language')showPage('cloud');
   else if(window.hnAuthorized&&!previously){refreshState(true).catch(()=>{});if(location.hash!=='#cloud'&&location.hash!=='#language')showPage('home');}
   $('#cloud-retry').hidden=window.hnAuthorized;

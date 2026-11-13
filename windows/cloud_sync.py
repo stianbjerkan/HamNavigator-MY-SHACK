@@ -138,6 +138,29 @@ class Sync:
             result=self.request('/v1/account/me',{'client':{'platform':'Windows','version':version,**self.ops.client()}})
             if result.get('user')!=self.config.get('user'):raise ValueError(ui_language.t('Serveren bekreftet ikke kontoen. Logg inn på nytt.'))
             self.authorized=True;self.is_admin=result.get('admin') is True
+    def online_directory(self, data, station_call):
+        # A slow directory read must not hold up log sync, logout or the radio.
+        with self.lock:
+            if not self.authorized or not self.config.get('token'):
+                raise ValueError(ui_language.t('Logg inn først.'))
+            target = dict(self.config)
+            if data.get('account') != [target.get('url'), target.get('email')]:
+                raise ValueError(ui_language.t('Logg inn først.'))
+        query = {'after': data.get('after', '')}
+        if 'share' in data:
+            if type(data['share']) is not bool:
+                raise ValueError('Invalid visibility preference.')
+            if data['share'] and (not station_call or data.get('callsign') != station_call):
+                return {'station_changed': True}
+            query['share'] = station_call if data['share'] else ''
+        reply = self.request('/v1/account/me', {'online_directory': query}, config=target)
+        with self.lock:
+            if not self.authorized or (target['url'], target['token']) != (self.config.get('url'), self.config.get('token')):
+                raise ValueError(ui_language.t('Logg inn først.'))
+        if 'online_directory' not in reply:
+            return {'supported': False}
+        return {**reply['online_directory'], 'supported': True, 'station_call': station_call}
+
     def admin_users(self,data):
         # The server independently verifies owner permissions for every request.
         with self.lock:

@@ -6,3 +6,9 @@
 .hn-community p{font-size:.9rem;line-height:1.5;color:#c2d9e6;margin:12px 0 0}
 .hn-community-status{min-height:1.5em}
 .hn-community.container{margin:24px auto;width:calc(100% - 40px)}
+#online-callsigns [hidden],#online-callsigns[hidden]{display:none!important}
+#online-callsigns ul{display:flex;flex-wrap:wrap;gap:.5rem 1rem;list-style:none;padding:0;margin:.75rem 0;font-weight:650}
+#online-callsigns ul:empty,#online-callsigns [role=status]:empty{display:none}
+#online-callsigns .online-choice{display:flex;align-items:center;gap:.5rem;margin-top:1rem;width:fit-content}
+#online-callsigns .online-choice input{width:auto;margin:0}
+#online-callsigns .online-pages{display:flex;gap:.5rem}

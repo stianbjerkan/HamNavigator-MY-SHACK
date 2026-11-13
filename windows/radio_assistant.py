@@ -781,7 +781,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send({'language':ui_language.get()})
             if path == '/api/community':
                 return self.send(community.snapshot())
-            if path in ('/community.js', '/community.css'):
+            if path in ('/community.js', '/community.css', '/online.js'):
                 return self.send((ROOT/path[1:]).read_text(encoding='utf-8'), content_type='text/javascript; charset=utf-8' if path.endswith('.js') else 'text/css; charset=utf-8')
             if path == '/api/health':
                 return self.send({'app':'HamNavigator MY SHACK','version':RUNNING_VERSION,'root':str(ROOT),'pid':os.getpid(),'can_stop':True,'stopping':BACKEND_STOPPING,'shutdown_phase':BACKEND_SHUTDOWN_PHASE})
@@ -877,6 +877,10 @@ class Handler(BaseHTTPRequestHandler):
                 elif action in ('request-reset','reset-password','resend-verification','verify-email'):result=CLOUD.email_action(action,raw)
                 elif action=='verify':result=CLOUD.verify()
                 elif action=='admin-users':result=CLOUD.admin_users(raw)
+                elif action=='online':
+                    with LOCK:
+                        station_call = STATE['settings'].get('call', '')
+                    result=CLOUD.online_directory(raw, station_call)
                 elif action=='recovery':result=CLOUD.recovery()
                 elif action=='disconnect':result=CLOUD.disconnect()
                 elif action=='auto':result=CLOUD.auto(raw.get('enabled',False))
