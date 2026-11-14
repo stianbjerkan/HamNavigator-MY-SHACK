@@ -42,19 +42,21 @@
   <article class="card"><h2>Levering til loggtjenester</h2><p>Cloud deler leveringsstatus fra Android-appen med PC-ene.</p><button id="cloud-deliveries" class="secondary" disabled>Hent leveringsstatus</button><div id="cloud-delivery-list" role="status"></div></article>`;
   const main=document.querySelector('main');main.insertBefore(section,main.querySelector('footer'));
   const $=selector=>section.querySelector(selector),form=$('#cloud-connect'),fields=form.elements;
-  let pendingVerification=false,busy=false,register=false,registration='open',connected=false,lastSync='',initial=true,editingServer=false,lastState={automatic:false};
-  function openAccount(){showPage('cloud');status();}navButton.onclick=openAccount;accountButton.onclick=openAccount;
+  let pendingVerification=false,busy=false,register=false,registration='open',connected=false,requestNumber=0,initial=true,editingServer=false,lastState={automatic:false};
+  function openAccount(){showPage('cloud');}navButton.onclick=openAccount;accountButton.onclick=openAccount;
   function message(text,error=false){$('#cloud-auth-status').textContent=text;$('#cloud-auth-status').classList.toggle('error',error);}
   function controls(){section.querySelectorAll('button,input').forEach(e=>e.disabled=busy);fields.code.disabled=busy||!pendingVerification;fields.code.required=pendingVerification;fields.password_confirm.disabled=busy||!register;fields.password_confirm.required=register;const invite=register&&registration==='invite';fields.invite.disabled=busy||!invite;fields.invite.required=invite;$('#cloud-invite-label').hidden=!invite;for(const id of ['#cloud-auto','#cloud-now','#cloud-deliveries','#cloud-out','#cloud-recovery'])$(id).disabled=busy||!connected;$('#cloud-submit').disabled=busy||(register&&registration==='closed');}
   function mode(value){pendingVerification=false;$('#cloud-verify-group').hidden=true;fields.code.value='';$('#cloud-reset-card').hidden=true;register=value;fields.password.value='';fields.password_confirm.value='';fields.password_confirm.setCustomValidity('');fields.invite.value='';fields.password.type='password';$('#cloud-show-password').textContent='Vis';$('#cloud-show-password').setAttribute('aria-pressed','false');$('#cloud-login-tab').setAttribute('aria-pressed',String(!register));$('#cloud-register-tab').setAttribute('aria-pressed',String(register));$('#cloud-auth-title').textContent=register?'Opprett din HamNavigator-konto':'Velkommen tilbake';$('#cloud-submit').textContent=register?'Opprett konto':'Logg inn';$('#cloud-confirm-label').hidden=!register;$('#cloud-register-info').hidden=!register;$('#cloud-forgot').hidden=register;fields.password.minLength=register?12:1;fields.password.autocomplete=register?'new-password':'current-password';$('#cloud-password-help').textContent=register?'Minst 12 og maksimalt 256 tegn. Bruk et eget passord til HamNavigator.':'Bruk passordet til HamNavigator-kontoen din.';controls();}
-  function render(s){
+  function render(s, summary=false){
   const previously=window.hnAuthorized===true;window.hnAuthorized=s.authorized===true;
   document.body.classList.toggle('hn-authorized',window.hnAuthorized);
   window.dispatchEvent(new CustomEvent('hamnavigator-cloud-state',{detail:{admin:s.admin===true,authorized:window.hnAuthorized,account:JSON.stringify([s.url,s.email])}}));
-  if(!window.hnAuthorized && location.hash!=='#language')showPage('cloud');
+  if(!window.hnAuthorized && !['#cloud','#language'].includes(location.hash))showPage('cloud');
   else if(window.hnAuthorized&&!previously){refreshState(true).catch(()=>{});if(location.hash!=='#cloud'&&location.hash!=='#language')showPage('home');}
   $('#cloud-retry').hidden=window.hnAuthorized;
-  lastState=s;connected=!!s.connected;$('#cloud-auth-card').hidden=connected;$('#cloud-account-card').hidden=!connected;accountButton.textContent=connected?'Min konto':'Logg inn';$('#cloud-account-email').textContent=s.email||'';$('#cloud-account-server').textContent=s.url||'';$('#cloud-status').textContent=s.message+(s.last_sync?' Siste synkronisering: '+s.last_sync:'');$('#cloud-auto').checked=!!s.automatic;$('#cloud-backup').textContent=s.backup_folder?'Lokale sikkerhetskopier: '+s.backup_folder:'';
+  connected=!!s.connected;accountButton.textContent=connected?'Min konto':'Logg inn';
+  if(summary)return;
+  lastState=s;$('#cloud-auth-card').hidden=connected;$('#cloud-account-card').hidden=!connected;$('#cloud-account-email').textContent=s.email||'';$('#cloud-account-server').textContent=s.url||'';$('#cloud-status').textContent=s.message+(s.last_sync?' Siste synkronisering: '+s.last_sync:'');$('#cloud-auto').checked=!!s.automatic;$('#cloud-backup').textContent=s.backup_folder?'Lokale sikkerhetskopier: '+s.backup_folder:'';
   if(initial){fields.url.value=s.url||'https://lb7yk.no/cloud';fields.email.value=s.email||'';fields.certificate.value=s.certificate||'';$('#cloud-server-setup').open=!fields.url.value;initial=false;}
   const deliveries=$('#cloud-delivery-list');deliveries.replaceChildren();for(const item of (s.deliveries||[]).slice(-200)){const p=document.createElement('p');p.textContent=[item.call,item.date,item.time,item.service,item.state,item.message].filter(Boolean).join(' · ');deliveries.append(p);}
   const list=$('#cloud-conflicts');list.replaceChildren();const conflicts=s.conflicts||[];let shown=0;
@@ -68,8 +70,16 @@
     for(const [choice,label] of [['local','Behold denne PC-ens versjon'],['cloud','Bruk skyens versjon']]){const b=document.createElement('button');b.textContent=label;b.onclick=()=>send('sync',{choices:{[conflict.key]:choice}});box.append(b);}list.append(box);
   }shown=Math.min(shown+20,conflicts.length);if(shown<conflicts.length){const more=document.createElement('button');more.className='secondary cloud-more-conflicts';more.textContent='Vis flere ('+(conflicts.length-shown)+' igjen)';more.onclick=showMore;list.append(more);}};
   showMore();controls();}
-  async function status(){if(busy)return;try{const r=await fetch('/api/cloud/status');if(!r.ok)throw Error();const s=await r.json();if(busy)return;render(s);if(s.last_sync&&s.last_sync!==lastSync){lastSync=s.last_sync;await refreshState();}}catch{if(!busy)$('#cloud-status').textContent='Kan ikke lese skystatus.';}}
-  async function send(action,data){if(busy)return;busy=true;controls();message('Arbeider …');try{const r=await fetch('/api/cloud/'+action,{method:'POST',headers:{'Content-Type':'application/json','X-Radio-Token':document.querySelector('meta[name="radio-token"]').content},body:JSON.stringify(data)});const s=await r.json();if(!r.ok)throw Error(s.error||'Operasjonen mislyktes.');
+  async function status(){
+    if(busy)return;
+    const current=++requestNumber, summary=!section.classList.contains('active');
+    try{
+      const r=await fetch(summary?'/api/cloud/status?summary=1':'/api/cloud/status');
+      if(!r.ok)throw Error();
+      const s=await r.json();
+      if(!busy&&current===requestNumber)render(s,summary);
+    }catch{if(!busy&&current===requestNumber)$('#cloud-status').textContent='Kan ikke lese skystatus.';}}
+  async function send(action,data){if(busy)return;++requestNumber;busy=true;controls();message('Arbeider …');try{const r=await fetch('/api/cloud/'+action,{method:'POST',headers:{'Content-Type':'application/json','X-Radio-Token':document.querySelector('meta[name="radio-token"]').content},body:JSON.stringify(data)});const s=await r.json();if(!r.ok)throw Error(s.error||'Operasjonen mislyktes.');
   if(s.verification_required){pendingVerification=true;$('#cloud-verify-group').hidden=false;$('#cloud-submit').textContent='Bekreft og logg inn';message(s.message);return true;}
   if(['request-reset','reset-password','resend-verification','verify-email'].includes(action)){message(s.message);}
   else if(action==='recovery'){const blob=new Blob([s.text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='HamNavigator-gjenopprettingsnokkel.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Gjenopprettingsnøkkelen er lastet ned. Oppbevar den privat.');}
@@ -88,5 +98,9 @@
   $('#cloud-resend').onclick=()=>send('resend-verification',{email:fields.email.value,url:fields.url.value,certificate:fields.certificate.value});
   $('#cloud-standard').onclick=()=>{fields.url.value='https://lb7yk.no/cloud';fields.certificate.value='';editingServer=false;registration='open';$('#cloud-server-setup').open=false;message('HamNavigator Cloud er valgt. Logg inn eller opprett konto.');};
   $('#cloud-retry').onclick=()=>send('verify',{});$('#cloud-now').onclick=()=>send('sync',{});$('#cloud-deliveries').onclick=()=>send('deliveries',{});$('#cloud-recovery').onclick=()=>send('recovery',{});$('#cloud-out').onclick=async()=>{if(await send('disconnect',{}))mode(false);};$('#cloud-auto').onchange=async e=>{if(!await send('auto',{enabled:e.target.checked}))e.target.checked=!!lastState.automatic;};$('#cloud-check').onclick=()=>send('check',{url:fields.url.value,certificate:fields.certificate.value});$('#cloud-import').onclick=()=>$('#cloud-connection-file').click();$('#cloud-connection-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>65536){message('Tilkoblingsfilen er for stor.',true);return;}await send('import-connection',{text:await f.text()});e.target.value='';};
-  mode(false);status().then(()=>{if(connected)send('verify',{});});if(location.hash==='#cloud')showPage('cloud',false);setInterval(status,5000);
+  mode(false);
+  if(location.hash==='#cloud')showPage('cloud',false);
+  document.addEventListener('hamnavigator-page-changed',({detail})=>{if(detail.page==='cloud')status();});
+  status().then(()=>{if(connected)send('verify',{});});
+  setInterval(status,5000);
 })();

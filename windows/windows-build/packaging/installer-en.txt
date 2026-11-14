@@ -1,4 +1,6 @@
-HamNavigator MY SHACK 1.9.24
+HamNavigator MY SHACK 1.9.25
+
+The overview and logbook load changes when needed. A sync with no changes no longer reloads the entire logbook.
 
 Overview → Online now shows callsigns that users choose to share. Select Show my callsign to join. Requires Cloud 0.6.4.
 

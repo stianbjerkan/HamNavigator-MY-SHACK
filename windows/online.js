@@ -23,18 +23,26 @@
   card.querySelector('h2').textContent = t[0];
   card.querySelector('.online-intro').textContent = t[1];
   label.textContent = t[2]; first.textContent = t[9]; next.textContent = t[8]; update.textContent = t[11];
-  let account = '', generation = 0, busy = false, after = '', last = '', station = '', own = '', updated = 0;
+  let account = '', generation = 0, pending = '', after = '', last = '', station = '', own = '', updated = 0;
+  const saving = {nb:'Lagrer valget i Cloud …', en:'Saving your choice to Cloud …', sv:'Sparar ditt val i Cloud …'};
   const visible = () => !!account && !document.hidden && home.classList.contains('active');
   function clear() {
     list.replaceChildren(); first.hidden = true; next.hidden = true; update.hidden = true;
-    toggle.disabled = true; toggle.checked = false; hint.textContent = ''; label.textContent = t[2];
+    toggle.disabled = true; toggle.checked = false; toggle.indeterminate = false;
+    hint.textContent = ''; label.textContent = t[2];
     status.textContent = ''; own = ''; station = ''; last = ''; updated = 0;
   }
   async function refresh(change) {
-    if (!visible() || busy) return;
-    const current = generation;
-    busy = true;
-    toggle.disabled = true; update.disabled = true; next.disabled = true; first.disabled = true;
+    if (!visible() || pending === 'write' || (pending && !change)) return;
+    const current = ++generation;
+    pending = change ? 'write' : 'read';
+    next.disabled = true; first.disabled = true;
+    if (change) {
+      toggle.checked = change.share;
+      toggle.disabled = true; update.disabled = true;
+      hint.textContent = '';
+      status.textContent = saving[document.documentElement.lang.split('-')[0]] || saving.nb;
+    }
     try {
       const data = await api('cloud/online', {account: JSON.parse(account), after, ...change});
       if (current !== generation) return;
@@ -45,7 +53,7 @@
       if (!data.supported) {clear(); status.textContent = t[7]; return;}
       own = data.own_call; station = data.station_call; updated = Date.now();
       const validStation = /^(?=.{3,32}$)(?=.*[0-9])(?=.*[A-Z])[A-Z0-9]+(?:\/[A-Z0-9]+)*$/.test(station);
-      toggle.checked = !!own; toggle.disabled = !own && !validStation;
+      toggle.indeterminate = false; toggle.checked = !!own; toggle.disabled = !own && !validStation;
       label.textContent = t[2] + (own || validStation ? ' (' + (own || station) + ')' : '');
       hint.textContent = own ? t[10] + ' ' + own : validStation ? '' : t[3];
       update.hidden = !own || !validStation || own === station;
@@ -56,15 +64,17 @@
       first.hidden = !after; next.hidden = !data.more || !last;
       status.textContent = !last && !after ? t[4] : '';
     } catch (_) {
-      if (current === generation) {after = ''; clear(); status.textContent = change ? t[12] : t[6];}
+      if (current !== generation) return;
+      after = ''; clear(); toggle.indeterminate = true; status.textContent = change ? t[12] : t[6];
     } finally {
       if (current === generation) {
-        busy = false; first.disabled = false; next.disabled = false; update.disabled = false;
+        pending = ''; first.disabled = false; next.disabled = false; update.disabled = false;
+        if (change && !updated && toggle.indeterminate) setTimeout(() => {if (current === generation) refresh();}, 1000);
       }
     }
   }
   function reset() {
-    generation++; busy = false; after = ''; clear();
+    generation++; pending = ''; after = ''; clear();
     card.hidden = !account;
     if (visible()) {status.textContent = t[5]; refresh();}
   }
@@ -73,7 +83,7 @@
     if (account !== identity) {account = identity; reset();}
   });
   function poll() {
-    if (!visible()) return;
+    if (!visible() || pending || (updated && Date.now() - updated < 10000)) return;
     if (updated && Date.now() - updated >= 60000) {clear(); status.textContent = t[5];}
     refresh();
   }
@@ -85,7 +95,6 @@
   next.onclick = () => {after = last; refresh();};
   toggle.onchange = () => {
     const checked = toggle.checked;
-    toggle.checked = !!own;
     after = '';
     refresh({share: checked, callsign: checked ? station : ''});
   };

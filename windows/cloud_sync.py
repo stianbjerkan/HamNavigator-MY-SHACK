@@ -59,6 +59,7 @@ def protect(text, decrypt=False):
 class Sync:
     def __init__(self,folder,snapshot,apply):
         self.folder=Path(folder)/'cloud';self.folder.mkdir(parents=True,exist_ok=True)
+        self.account_lock = threading.RLock()
         self.snapshot=snapshot;self.apply=apply;self.lock=threading.RLock();self.config={};self.status={'message':ui_language.t('Ikke tilkoblet'),'conflicts':[]};self.stop=threading.Event();self.wake=threading.Event();self.started_at=None;self.last_finished=None;self.worker=None;self.backup_digest=None
         if (self.folder/'connection.json').exists():self.config=json.loads((self.folder/'connection.json').read_text(encoding='utf-8'))
         if not self.config.get('url'):self.config.update(url=PUBLIC_CLOUD,certificate='')
@@ -139,8 +140,8 @@ class Sync:
             if result.get('user')!=self.config.get('user'):raise ValueError(ui_language.t('Serveren bekreftet ikke kontoen. Logg inn på nytt.'))
             self.authorized=True;self.is_admin=result.get('admin') is True
     def online_directory(self, data, station_call):
-        # A slow directory read must not hold up log sync, logout or the radio.
-        with self.lock:
+        # Directory requests share a lock with account transitions only.
+        with self.account_lock:
             if not self.authorized or not self.config.get('token'):
                 raise ValueError(ui_language.t('Logg inn først.'))
             target = dict(self.config)
@@ -154,7 +155,7 @@ class Sync:
                 return {'station_changed': True}
             query['share'] = station_call if data['share'] else ''
         reply = self.request('/v1/account/me', {'online_directory': query}, config=target)
-        with self.lock:
+        with self.account_lock:
             if not self.authorized or (target['url'], target['token']) != (self.config.get('url'), self.config.get('token')):
                 raise ValueError(ui_language.t('Logg inn først.'))
         if 'online_directory' not in reply:
@@ -204,6 +205,12 @@ class Sync:
         value=json.loads(path.read_text(encoding='utf-8'))
         return json.loads(protect(value['protected'],True)) if isinstance(value,dict) and 'protected' in value else value
     def save_private(self,path,value):atomic(path,{'protected':protect(json.dumps(value,ensure_ascii=False))})
+    def account_status(self):
+        config = self.config
+        return {'authorized':self.authorized, 'admin':self.authorized and self.is_admin,
+                'url':config.get('url',''), 'email':config.get('email',''),
+                'connected':bool(config.get('token'))}
+
     def view(self):
         note=''
         from settings_transfer import pending_conflicts,read_private as read_settings
@@ -222,7 +229,7 @@ class Sync:
         for conflict in blocked:conflicts.setdefault(conflict['key'],conflict)
         return {**self.status,'authorized':self.authorized,'admin':self.authorized and self.is_admin,'conflicts':list(conflicts.values()),'message':self.status['message']+note,'url':self.config.get('url',''),'email':self.config.get('email',''),'certificate':self.config.get('certificate',''),'automatic':self.config.get('automatic',False),'connected':bool(self.config.get('token')),'backup_folder':str(self.folder/'backups')}
     def connect(self,data):
-        with self.lock:
+        with self.lock, self.account_lock:
             password=data.get('password','')
             if not isinstance(password,str) or not password or len(password)>256:raise ValueError(ui_language.t('Skriv passordet ditt (maksimalt 256 tegn).'))
             if data.get('register'):
@@ -248,7 +255,7 @@ class Sync:
         config=self.connection_settings(data)
         return self.request(paths[action],{k:data[k] for k in ('email','password','code') if k in data},config=config,authenticated=False)
     def disconnect(self):
-        with self.lock:
+        with self.lock, self.account_lock:
             try:self.request('/v1/logout',{})
             finally:
                 self.authorized=False;self.is_admin=False

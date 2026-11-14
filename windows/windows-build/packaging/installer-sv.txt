@@ -1,4 +1,6 @@
-HamNavigator MY SHACK 1.9.24
+HamNavigator MY SHACK 1.9.25
+
+Översikten och loggboken hämtar ändringar när det behövs. En synkronisering utan ändringar läser inte in hela loggboken på nytt.
 
 Översikt → Inloggade nu visar frivilligt delade anropssignaler. Välj Visa min anropssignal för att delta. Kräver Cloud 0.6.4.
 

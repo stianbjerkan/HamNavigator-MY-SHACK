@@ -10,6 +10,7 @@ let editingQso = null;
 let toastTimer;
 let lastLogged = 0;
 let lastLogRevision = '';
+let lastStateRevision = 0;
 let polling = false;
 let liveError = false;
 let alertedSpots = new Set();
@@ -83,7 +84,8 @@ function showPage(page, updateHash=true) {
   $$('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
   $('#page-label').textContent=pageNames[page];
   if (updateHash) history.replaceState(null,'','#'+page);
-  if (page==='hf') renderBands();
+  if (page==='hf') {renderBands();renderDX();}
+  if (page==='ft8') renderFT8();
   document.dispatchEvent(new CustomEvent('hamnavigator-page-changed',{detail:{page}}));
   window.scrollTo({top:0,behavior:'instant'});
 }
@@ -104,7 +106,14 @@ function stamp(value) {
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('nb-NO',{timeZone:'UTC',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date)+' UTC';
 }
 const mode = q => q.SUBMODE || q.MODE || '';
-const sortedQsos = () => [...state.qsos].sort((a,b)=>(b.QSO_DATE+b.TIME_ON).localeCompare(a.QSO_DATE+a.TIME_ON));
+let sortedSource, sortedRows;
+function sortedQsos() {
+  if (sortedSource !== state.qsos) {
+    sortedSource=state.qsos;
+    sortedRows=[...sortedSource].sort((a,b)=>(b.QSO_DATE+b.TIME_ON).localeCompare(a.QSO_DATE+a.TIME_ON));
+  }
+  return sortedRows;
+}
 const empty = (title, text) => `<div class="empty"><strong>${esc(title)}</strong><p>${esc(text)}</p></div>`;
 const table = (headers, rows) => `<div class="table-wrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
 function qsoDate(q) {return `${q.QSO_DATE.slice(6,8)}.${q.QSO_DATE.slice(4,6)}.${q.QSO_DATE.slice(0,4)}`;}
@@ -115,7 +124,7 @@ function qsoRows(qsos,edit=false) {
 function renderLog() {
   const search=$('#log-search').value.trim().toUpperCase();
   const filter=$('#log-mode').value;
-  const rows=sortedQsos().filter(q=>(!filter||mode(q)===filter)&&[q.CALL,q.GRIDSQUARE,q.NAME,q.COMMENT,q.BAND,q.FREQ].join(' ').toUpperCase().includes(search));
+  const rows=!filter&&!search ? sortedQsos() : sortedQsos().filter(q=>(!filter||mode(q)===filter)&&(!search||[q.CALL,q.GRIDSQUARE,q.NAME,q.COMMENT,q.BAND,q.FREQ].join(' ').toUpperCase().includes(search)));
   const pages=Math.max(1,Math.ceil(rows.length/100));
   logPage=Math.max(0,Math.min(logPage,pages-1));
   $('#log-count').textContent=`${rows.length} av ${state.qsos.length} kontakter`;
@@ -252,6 +261,7 @@ async function weather(){
 const watchPrefixes=()=>String(state.settings.watch||'').split(/[\s,;]+/).filter(Boolean);
 const isWatched=spot=>watchPrefixes().some(p=>spot.call.startsWith(p));
 function renderDX(){
+  if (!$('#page-hf').classList.contains('active')) return;
   $('#dx-status').textContent=live.dx.message||'Ikke tilkoblet';
   $('#dx-connect').disabled=live.dx.running;$('#dx-stop').disabled=!live.dx.running;
   const search=$('#dx-search').value.toUpperCase(),band=$('#dx-band').value;
@@ -272,6 +282,7 @@ function renderFT8(){
   $('#udp-status').textContent=stale&&u.running?'Ingen meldinger siste 45 sekunder':displayProgramName(u.message)||'Ikke startet';
   $('#stat-ft8').textContent=!u.running?'Ikke startet':!u.last_seen?'Venter':logOnly?'Kun QSO-logg':stale?'Ingen ferske data':'Mottar';
   $('#stat-ft8-sub').textContent=u.logged?u.logged+' kontakter lagret i denne økten':'Tilkobling under HamNavigator Digital';
+  if (!$('#page-ft8').classList.contains('active')) return;
   $('#udp-start').disabled=u.running;$('#udp-stop').disabled=!u.running;
   $('#ft8-last').textContent=u.last_seen?'Sist mottatt '+stamp(u.last_seen):'Ingen data mottatt';
   $('#ft8-clients').innerHTML=Object.values(u.clients).map(c=>`<article class="card stat"><span>${esc(displayProgramName(c.client))} · ${esc(c.call||'Ukjent stasjon')}</span><strong>${c.freq.toFixed(3)}</strong><small>MHz · ${esc(c.mode)} · ${stale?'Siste kjente status':c.transmitting?'Sender':c.decoding?'Dekoder':'Mottak'} · ${esc(c.grid)}</small></article>`).join('');
@@ -287,7 +298,7 @@ async function poll(){
   if(polling)return;polling=true;
   try{
     live=await api('live');liveError=false;
-    if(live.udp.logged!==lastLogged||live.log_revision!==lastLogRevision){await refreshState();lastLogged=live.udp.logged;lastLogRevision=live.log_revision;}
+    if(live.udp.logged!==lastLogged||live.log_revision!==lastLogRevision||live.state_revision!==lastStateRevision){await refreshState();lastLogged=live.udp.logged;lastLogRevision=live.log_revision;lastStateRevision=live.state_revision;}
     renderFT8();renderDX();renderBands();
     const alerts=live.dx.spots.filter(s=>!alertedSpots.has(s.id)&&isWatched(s)&&Date.now()-new Date(s.received)<60000);
     live.dx.spots.forEach(s=>alertedSpots.add(s.id));
@@ -399,7 +410,7 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&$('#module-picker').open){$('#module-picker').open=false;$('#module-picker>summary').focus();}
 });
 window.addEventListener('hashchange',()=>showPage(location.hash.slice(1),false));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){poll();refreshState().catch(()=>{});}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden && window.hnAuthorized)poll();});
 tick();showPage(location.hash.slice(1)||'home',false);
 setInterval(()=>{if(window.hnAuthorized)poll();},3000);
 

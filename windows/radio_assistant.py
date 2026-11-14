@@ -58,6 +58,7 @@ AUDIO = CallsignListener()
 CLOUD = None
 SHARED = None
 SHARED_BASE = []
+STATE_REVISION = 0
 
 def refresh_shared():
     global SHARED_BASE
@@ -112,6 +113,8 @@ def cloud_snapshot():
 
 def cloud_apply(incoming, captured):
     global STATE
+    if not incoming:
+        return []
     with LOCK:
         before=copy.deepcopy(STATE)
         try:return _cloud_apply(incoming,captured)
@@ -172,7 +175,7 @@ def utcnow():
 
 
 def persist():
-    global SHARED_BASE
+    global SHARED_BASE, STATE_REVISION
     if SHARED is not None:
         from shared_log import ID,normalize
         rows=[]
@@ -192,6 +195,7 @@ def persist():
     if path.exists():
         shutil.copy2(path, DATA_DIR / 'data.previous.json')
     os.replace(temp, path)
+    STATE_REVISION += 1
 
 
 def load_state():
@@ -786,7 +790,8 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/health':
                 return self.send({'app':'HamNavigator MY SHACK','version':RUNNING_VERSION,'root':str(ROOT),'pid':os.getpid(),'can_stop':True,'stopping':BACKEND_STOPPING,'shutdown_phase':BACKEND_SHUTDOWN_PHASE})
             if path == '/api/cloud/status':
-                return self.send(CLOUD.view() if CLOUD else {'message':ui_language.t('Start programmet på nytt for å aktivere skyklienten.')})
+                summary = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get('summary') == ['1']
+                return self.send((CLOUD.account_status() if summary else CLOUD.view()) if CLOUD else {'message':ui_language.t('Start programmet på nytt for å aktivere skyklienten.')})
             if path == '/language.js':
                 return self.send((ROOT/'language.js').read_text(encoding='utf-8'),content_type='text/javascript; charset=utf-8')
             if path in tuple(f'/languages/{code}/{name}.js' for code in ('en','sv') for name in ('app','cloud','operations','admin','listener','portable','portable-map')):
@@ -806,7 +811,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send({'settings':{},'qsos':[],'repeaters':[],'module_catalog':ui_language.modules(MODULE_CATALOG),'login_required':True})
                 with LOCK:
                     refresh_shared()
-                    return self.send({**copy.deepcopy(STATE), 'data_dir': str(DATA_DIR), 'module_catalog': ui_language.modules(MODULE_CATALOG)})
+                    snapshot = {**copy.deepcopy(STATE), 'data_dir': str(DATA_DIR), 'module_catalog': ui_language.modules(MODULE_CATALOG)}
+                return self.send(snapshot)
             if path.startswith('/api/') and (not CLOUD or not CLOUD.authorized):
                 return self.send({'error':ui_language.t('Logg inn for å bruke HamNavigator.')},401)
             if path == '/api/portable-map':
@@ -819,7 +825,8 @@ class Handler(BaseHTTPRequestHandler):
                         revision = str(stat.st_mtime_ns)+':'+str(stat.st_size)
                     view=copy.deepcopy(LIVE)
                     for key in ('udp','dx'):view[key]['message']=ui_language.t(view[key]['message'])
-                    return self.send({**view, 'log_revision':revision})
+                    state_revision = STATE_REVISION
+                return self.send({**view, 'log_revision':revision, 'state_revision':state_revision})
             if path == '/api/audio/status':
                 return self.send(AUDIO.snapshot())
             if path == '/api/weather':
